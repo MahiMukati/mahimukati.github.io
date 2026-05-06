@@ -170,6 +170,3 @@ related_publications: false
    The project not only strengthened my technical skills but also gave me a profound
    appreciation for the elegance and simplicity of Unix design principles.
 
-```
-
-{% endraw %}
