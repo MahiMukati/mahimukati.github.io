@@ -428,6 +428,11 @@ ninja.data = [{
           description: "AI-Powered Chrome Extension to Prevent Impulse Purchases",
           section: "Projects",handler: () => {
               window.location.href = "/projects/impulseguard/";
+            },},{id: "projects-jraw",
+          title: 'JRAW',
+          description: "JavaFX-based drawing application demonstrating OOP design patterns and MVC architecture",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jraw/";
             },},{id: "projects-mysh",
           title: 'MYSH',
           description: "Custom Unix Shell in C",
