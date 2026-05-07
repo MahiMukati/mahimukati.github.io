@@ -4,7 +4,7 @@ title: JRAW
 description: JavaFX-based drawing application demonstrating OOP design patterns and MVC architecture
 img: assets/img/jraw.jpg
 importance: 1
-category: work
+category: creations
 related_publications: false
 ---
 

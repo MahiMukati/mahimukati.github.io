@@ -4,7 +4,7 @@ title: MYSH
 description: Custom Unix Shell in C
 img: assets/img/shell.jpg
 importance: 1
-category: work
+category: creations
 related_publications: false
 ---
 
