@@ -1,11 +1,10 @@
 ---
 layout: page
-title: projects
+title: Projects
 permalink: /projects/
-description: A growing collection of your cool projects.
+description: Systems programming, desktop software, and a browser extension MVP.
 nav: true
-nav_order: 3
-display_categories: [creations]
+nav_order: 1
 horizontal: false
 ---
 

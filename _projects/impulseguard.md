@@ -1,7 +1,7 @@
 ---
 layout: page
 title: ImpulseGuard
-description: AI-Powered Chrome Extension to Prevent Impulse Purchases
+description: Browser extension MVP with AI purchase classification and a 24-hour checkout block; fourth of 32 teams at Ibtikar Waterloo.
 img: assets/img/impulseguard.jpg
 importance: 1
 category: creations
@@ -10,13 +10,13 @@ related_publications: false
 
 ## Overview
 
-ImpulseGuard is an intelligent browser extension that helps users save money by analyzing and blocking impulse purchases in real-time. Using AI to understand product context and categorize spending, it acts as a financial guardian that helps users make more mindful purchasing decisions.
+ImpulseGuard is a browser extension MVP that detects add-to-cart actions, uses the Claude API to classify purchases as needs or wants, and applies a 24-hour checkout block.
 
-This prototype and business plan was developed in under 24 hours during the Ibtikar Waterloo case competition. The project addresses UN Sustainable Development Goal 12 (Responsible Consumption and Production), specifically target 12.8: ensuring that people everywhere have the relevant information and awareness for sustainable development and lifestyles in harmony with nature.
+I built the MVP in **under 48 hours** for the **Ibtikar Case Competition in Waterloo in February 2026**. Our team placed **fourth among 32 teams**, presenting the technical architecture and monetization model to venture capitalists and industry investors.
 
 ## The Problem
 
-Online shopping has made impulse purchasing easier than ever, and Generation Z has a problem. With one-click checkout, targeted ads, and strategically designed UI, e-commerce platforms are engineered to encourage spontaneous spending. Traditional solutions like budgeting apps require manual entry and only show spending *after* it happens—too late to prevent the purchase.
+ImpulseGuard explores how a browser extension can introduce a pause between seeing a product and buying it. The prototype focuses on detecting shopping interactions and applying a cooling-off period before checkout.
 
 ## The Solution
 
@@ -38,14 +38,13 @@ ImpulseGuard intervenes **before** the purchase is made. When shopping on suppor
 ### Real-Time Purchase Interception
 
 - Places transparent overlays on "Add to Cart" buttons for blocked items
-- Non-intrusive design that doesn't break the shopping experience
+- Overlays allow interception without changing the underlying product listing
 - Instant analysis with loading states and visual feedback
 
 ### 24-Hour Cooling Period
 
 - Blocked items cannot be attempted again for 24 hours
-- Based on behavioral economics research showing that delaying decisions reduces impulse buying
-- Forces a "sleep on it" approach for questionable purchases
+- Adds a deliberate pause before the user returns to a blocked purchase
 
 ### Comprehensive Statistics Dashboard
 
@@ -60,16 +59,16 @@ ImpulseGuard intervenes **before** the purchase is made. When shopping on suppor
 
 ### Tech Stack
 
-| Category | Technology |
-|----------|------------|
-| **Frontend** | React 19.2.4 with TypeScript |
-| **UI Library** | Radix UI (accessible component library) |
-| **Styling** | Tailwind CSS v4 with custom theme |
-| **Build Tool** | Vite 5.4.21 |
-| **Type Safety** | TypeScript 5.4.5 (strict mode) |
-| **AI Integration** | Claude AI API (Haiku model) |
-| **Storage** | Chrome Storage API |
-| **Extension Platform** | Chrome Manifest V3 |
+| Category               | Technology                              |
+| ---------------------- | --------------------------------------- |
+| **Frontend**           | React 19.2.4 with TypeScript            |
+| **UI Library**         | Radix UI (accessible component library) |
+| **Styling**            | Tailwind CSS v4 with custom theme       |
+| **Build Tool**         | Vite 5.4.21                             |
+| **Type Safety**        | TypeScript 5.4.5 (strict mode)          |
+| **AI Integration**     | Claude AI API (Haiku model)             |
+| **Storage**            | Chrome Storage API                      |
+| **Extension Platform** | Chrome Manifest V3                      |
 
 ### Product Detection
 
@@ -144,20 +143,6 @@ npm run build
 - Export savings data for financial planning tools
 - Community-shared "impulse patterns" for improved detection
 
-## Why ImpulseGuard Matters
+## Source Availability
 
-Financial wellness isn't just about earning more—it's about spending mindfully. ImpulseGuard combines:
-
-- **Behavioral Economics** – Cooling-off periods reduce impulsive decisions
-- **AI Intelligence** – Context-aware understanding, not just price filters
-- **Seamless UX** – No friction for legitimate purchases, firm guardrails for impulses
-
-By intervening at the moment of decision, ImpulseGuard helps users build better spending habits and save thousands over time—without requiring willpower alone.
-
----
-
-Built with React, TypeScript, and Claude AI. Designed to make mindful spending effortless.
-
----
-
-**Note:** The source code for ImpulseGuard is not yet publicly available as the project is currently under active development. Stay tuned for updates!
+The source code is not publicly available. [Get in touch](mailto:mahi.mukati@mail.utoronto.ca) to discuss the project and its implementation.

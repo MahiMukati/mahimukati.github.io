@@ -1,9 +1,10 @@
 ---
 layout: default
 permalink: /blog/
-title: blog
+title: Blog
+description: Notes on software development and what I learn along the way.
 nav: true
-nav_order: 1
+nav_order: 3
 pagination:
   enabled: true
   collection: posts
@@ -101,6 +102,11 @@ pagination:
 
 {% endif %}
 
+{% if site.posts.size == 0 %}
+
+  <p class="mt-4">No posts published yet.</p>
+{% endif %}
+
   <ul class="post-list">
 
     {% if page.pagination.enabled %}
@@ -189,7 +195,7 @@ pagination:
 
   </ul>
 
-{% if page.pagination.enabled %}
+{% if page.pagination.enabled and paginator.total_pages > 1 %}
 {% include pagination.liquid %}
 {% endif %}
 

@@ -1,20 +1,20 @@
 ---
 layout: page
 title: MYSH
-description: Custom Unix Shell in C
+description: Unix-like shell in C with process management, pipelines, environment expansion, and socket-based messaging.
 img: assets/img/shell.jpg
-importance: 1
+importance: 2
 category: creations
 related_publications: false
 ---
 
 ## Overview
 
-MYSH is a fully-functional Unix shell implementation written from scratch in C. This project was developed as part of CSC209: Software Tools and Systems Programming at the University of Toronto, with the goal of demystifying what happens behind the scenes when users interact with a command-line interface. By building a shell from the ground up, I gained hands-on experience with fundamental operating systems concepts including process creation, inter-process communication, memory management, and system-level programming.
+MYSH is a Unix-like shell I built in C in March 2026. This project was developed as part of CSC209: Software Tools and Systems Programming at the University of Toronto, with the goal of demystifying what happens behind the scenes when users interact with a command-line interface. By building a shell from the ground up, I gained hands-on experience with fundamental operating systems concepts including process creation, inter-process communication, memory management, and system-level programming.
 
 ## Features
 
-MYSH implements a comprehensive set of shell functionality.
+The shell combines command execution, process management, environment expansion, and networking.
 
 ### Core Command Execution
 
@@ -45,15 +45,16 @@ MYSH implements a comprehensive set of shell functionality.
 
 ### Additional Features
 
-- **Tab Completion**: Navigate and autocomplete directory and file names (where implemented)
-- **Environment Variables**: Dynamic access to shell and user environment
+- **Environment Variables**: Dynamically allocated variables with custom expansion logic
+- **Filesystem Utilities**: Recursive traversal and error handling
+- **Networking**: Socket-based client-server messaging across concurrent processes
 - **Error Handling**: Robust error messages and graceful failure handling for invalid commands or system call failures
 
 ## Technical Implementation
 
 ### Process Management
 
-The heart of MYSH lies in its process management. Every external command execution involves.
+The heart of MYSH lies in its process management. The following simplified example illustrates process creation:
 
 ```c
 pid_t pid = fork();
@@ -120,7 +121,7 @@ When implementing pipes and redirection, ensuring file descriptors are properly 
 
 ## What I Learned
 
-Building MYSH provided deep insights into.
+Building MYSH gave me practice with:
 
 - **System Calls**: First-hand experience with fork(), exec(), wait(), pipe(), dup2(), and signal handling functions
 - **Process Lifecycle**: Understanding the complete lifecycle of Unix processes from creation to termination
@@ -131,17 +132,13 @@ Building MYSH provided deep insights into.
 
 ## Future Enhancements
 
-Possible extensions for MYSH include.
+Possible extensions include:
 
 - Command history with arrow key navigation
 - Tab completion for commands and file paths
 - Shell scripting with variables and control flow
 - Job control commands (fg, bg, jobs)
 - Globbing and wildcard expansion
-
----
-
-MYSH represents a significant milestone in my systems programming journey. It transformed abstract concepts about operating systems into concrete, working code. The project not only strengthened my technical skills but also gave me a profound appreciation for the elegance and simplicity of Unix design principles.
 
 ---
 
