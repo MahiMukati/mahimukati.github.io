@@ -23,7 +23,7 @@ I'm Mahi, a software developer studying Computer Science in the Honours Bachelor
 
 I'm currently the Software Developer and Unity Integration Lead on an **AMD–University of Toronto experiential industry project**, working on bringing [AMD Schola]({{ '/projects/amd-schola/' | relative_url }})'s reinforcement learning tools from Unreal Engine to Unity. I've led the C# interface design for environments, agents, sensors, actuators, and policies; built a Unity Editor configuration prototype; and established the project's CI/CD pipeline. Technical reviews with AMD engineers help shape the requirements for Python training and local inference.
 
-Previously, I worked as a Software Developer and QA Tester at **[REP](https://rep.company)**, supporting Geist, an AI-powered ideation platform. I tested features and releases, helped resolve defects, coordinated a beta-testing community, and translated feedback from users and prospective clients into product requirements.
+Previously, I worked as a Software Developer and QA Tester at **[REP](https://rep.company)**, supporting [Geist](https://geist.global), an AI-powered ideation platform. I tested features and releases, helped resolve defects, coordinated a beta-testing community, and translated feedback from users and prospective clients into product requirements.
 
 My projects include [MYSH]({{ '/projects/mysh/' | relative_url }}), a Unix-like shell in C; [Jraw]({{ '/projects/jraw/' | relative_url }}), a JavaFX drawing application; and [ImpulseGuard]({{ '/projects/impulseguard/' | relative_url }}), a browser extension MVP that placed fourth among 32 teams at the Ibtikar Case Competition in Waterloo.
 

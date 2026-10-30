@@ -259,3 +259,18 @@ ul.task-list input[type="checkbox"] {
 .d2h-diff-table {
   position: relative;
 }
+
+// Inline brand icons share the font icons' size, baseline, and theme colors.
+.social a svg.social-brand-icon {
+  width: 1.25em;
+  height: 1em;
+  margin-bottom: 0;
+  vertical-align: -0.125em;
+  color: var(--global-text-color);
+  transition: color 0.2s ease-in-out;
+}
+
+.social a:hover svg.social-brand-icon,
+.social a:focus-visible svg.social-brand-icon {
+  color: var(--global-theme-color);
+}

@@ -1,9 +1,10 @@
 ---
 layout: page
-title: AMD Schola for Unity
+title: AMD - UofT Industry Project
+card_description: Extend AMD Schola, a Reinforcement Learning Unreal Engine Plugin, to Unity
 description: Extending AMD Schola to Unity with reusable agent interfaces, episode control, and local ONNX inference.
 permalink: /projects/amd-schola/
-img: assets/img/amd-schola/return-to-base-scattered.jpeg
+img: assets/img/amd.jpg
 importance: 0
 category: creations
 related_publications: false

@@ -30,7 +30,7 @@ cv:
         end_date: 2026-10
         date_display: Jun 2026 – Oct 2026
         highlights:
-          - Led QA and release validation for Geist, an AI-powered ideation platform, testing features, patches, and UI changes, identifying defects, and contributing to fixes before production releases.
+          - Led QA and release validation for [Geist](https://geist.global), an AI-powered ideation platform, testing features, patches, and UI changes, identifying defects, and contributing to fixes before production releases.
           - Built and coordinated a Discord beta-testing community, collecting bug reports and feature requests to inform product improvements.
           - Translated prospective-client feedback from meetings and product demos into feature requirements and product decisions.
 
