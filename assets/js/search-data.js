@@ -30,8 +30,8 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/blog/";
           },
-        },{id: "projects-amd-schola-for-unity",
-          title: 'AMD Schola for Unity',
+        },{id: "projects-amd-uoft-industry-project",
+          title: 'AMD - UofT Industry Project',
           description: "Extending AMD Schola to Unity with reusable agent interfaces, episode control, and local ONNX inference.",
           section: "Projects",handler: () => {
               window.location.href = "/projects/amd-schola/";
