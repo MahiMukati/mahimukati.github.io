@@ -2,7 +2,7 @@
 layout: about
 title: About
 permalink: /
-subtitle: Software developer · Computer Science co-op at the University of Toronto
+subtitle: Software Developer · Computer Science Co-op Student at the University of Toronto
 
 profile:
   align: right
