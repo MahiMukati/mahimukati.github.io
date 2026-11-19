@@ -4,3 +4,8 @@ node_modules/
 .taste-skill/
 *.tar.gz
 *.zip
+
+# Keep original personal photos local; publish only selected, sanitized assets.
+/dist/assets/Gallery/*.[jJ][pP][gG]
+/dist/assets/Gallery/*.[jJ][pP][eE][gG]
+/out/
