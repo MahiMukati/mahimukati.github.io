@@ -31,7 +31,7 @@ The current homepage styles live in `dist/assets/lake.css`. Its renderer is `dis
 
 Move the mouse through the image to part the letters. Drag to bend the curtain; click for a ripple. With the canvas focused, arrow keys create a ripple and Space pauses or resumes. The renderer respects reduced-motion preferences and suspends itself when hidden or offscreen.
 
-The header’s sun/moon control switches the current site between misty blue-gray light mode (`#DCE6E8`) and deep teal dark mode (`#123C40`). It follows the device preference until a mode is chosen, then remembers that choice across pages and visits. The canvas background follows the theme even while motion is paused.
+The header’s sun/moon control switches the current site between warm stone light mode (`#E6E1D7`) and deep teal dark mode (`#123C40`). It follows the device preference until a mode is chosen, then remembers that choice across pages and visits. The canvas background follows the theme even while motion is paused.
 
 The previous version's portrait toggle and project previews remain available at `/previous/`. Raw Gallery JPEGs remain local and are excluded from publication; the old version uses metadata-free WebP portraits.
 

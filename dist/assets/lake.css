@@ -2,7 +2,7 @@
 @font-face{font-family:'Noto Nastaliq Urdu';src:url('fonts/noto-nastaliq-urdu.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:'Mr De Haviland';src:url('fonts/mr-de-haviland.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:Manrope;src:url('fonts/manrope-regular.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap}
-:root{color-scheme:light;--lake-paper:#dce6e8;--lake-ink:#183b40;--lake-muted:#506a70;--lake-accent:#286a74;--lake-line:#c1d0d3;--lake-surface:#cbdade}
+:root{color-scheme:light;--lake-paper:#e6e1d7;--lake-ink:#183b40;--lake-muted:#506870;--lake-accent:#286a74;--lake-line:#c1d0d3;--lake-surface:#cbdade}
 :root[data-theme=dark]{color-scheme:dark;--lake-paper:#123c40;--lake-ink:#fffef9;--lake-muted:#b6ced0;--lake-accent:#91c7ca;--lake-line:#31595e;--lake-surface:#254f54}
 *{box-sizing:border-box}
 html{min-width:280px;scroll-behavior:smooth}

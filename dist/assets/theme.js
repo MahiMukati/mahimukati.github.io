@@ -22,7 +22,7 @@
     const changed = document.documentElement.dataset.theme !== theme;
     document.documentElement.dataset.theme = theme;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = theme === 'dark' ? '#123C40' : '#DCE6E8';
+    if (meta) meta.content = theme === 'dark' ? '#123C40' : '#E6E1D7';
     updateButtons(theme);
     if (changed) window.dispatchEvent(new CustomEvent('portfolio:themechange', { detail: { theme } }));
   }

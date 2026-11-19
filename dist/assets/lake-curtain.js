@@ -10,8 +10,8 @@
   const pauseButton = document.querySelector('[data-curtain-pause]');
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const letters = [...'ابتٹثجچحخدڈرڑزژسشصضطظعغفقکگلمنںوہھیے'];
-  const paperColors = { light: '#dce6e8', dark: '#123c40' };
-  const paperChannels = { light: [220 / 255, 230 / 255, 232 / 255], dark: [18 / 255, 60 / 255, 64 / 255] };
+  const paperColors = { light: '#e6e1d7', dark: '#123c40' };
+  const paperChannels = { light: [230 / 255, 225 / 255, 215 / 255], dark: [18 / 255, 60 / 255, 64 / 255] };
   const currentTheme = () => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
   let theme = currentTheme();
   const atlasColumns = 7;
