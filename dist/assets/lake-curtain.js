@@ -224,7 +224,7 @@
   }
 
   function buildParticles() {
-    const targetCount = gl ? (width < 640 ? 8600 : 26000) : 5800;
+    const targetCount = gl ? (width < 640 ? 13000 : 40000) : 8800;
     columns = Math.max(64, Math.round(Math.sqrt(targetCount * width / height)));
     rows = Math.round(columns * height / width);
     cellWidth = width / columns;
