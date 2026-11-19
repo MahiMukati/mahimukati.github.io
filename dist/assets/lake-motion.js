@@ -4,9 +4,9 @@
   class LakeMotion {
     constructor(radius = 112) {
       this.radius = radius;
-      this.history = 120;
-      this.limit = 16;
-      this.omega = 18;
+      this.history = 520;
+      this.limit = 26;
+      this.omega = 13;
       this.segments = [];
       this.active = false;
       this.timeStep = -1;
@@ -26,7 +26,7 @@
           } else {
             this.segments.push({ ax: this.x, ay: this.y, bx: x, by: y, ux: dx / length, uy: dy / length, speed, start: this.time, time });
           }
-          if (this.segments.length > 32) this.segments.shift();
+          if (this.segments.length > 64) this.segments.shift();
         }
       }
       this.x = x; this.y = y; this.time = time; this.active = true;
@@ -48,14 +48,14 @@
     }
     target(x, y, now, out) {
       const radius = this.radius, radiusSquared = radius * radius;
-      let best = 0, targetX = 0, targetY = 0;
+      let best = 0, targetX = 0, targetY = 0, hoverX = 0, hoverY = 0;
       if (this.active) {
         const dx = x - this.x, dy = y - this.y;
         const distanceSquared = dx * dx + dy * dy;
         if (distanceSquared < radiusSquared) {
-          best = (1 - distanceSquared / radiusSquared) ** 3;
-          targetX = dx / radius * 12 * best;
-          targetY = dy / radius * 12 * best;
+          const weight = (1 - distanceSquared / radiusSquared) ** 3;
+          hoverX = dx / radius * 16 * weight;
+          hoverY = dy / radius * 16 * weight;
         }
       }
       for (let i = 0; i < this.segments.length; i++) {
@@ -68,10 +68,13 @@
         const weight = (1 - distanceSquared / radiusSquared) ** 3 * s.life;
         if (weight < best) continue;
         best = weight;
-        // A small directional current with a broad, gentle lift, never a hole.
-        targetX = (s.ux * s.speed * 12 + dx / radius * 12) * weight;
-        targetY = (s.uy * s.speed * 12 + dy / radius * 12) * weight;
+        // A directional current lingers behind the cursor, then eases home.
+        targetX = (s.ux * s.speed * 20 + dx / radius * 16) * weight;
+        targetY = (s.uy * s.speed * 20 + dy / radius * 16) * weight;
       }
+      // Blend into stationary hover as the wake fades, without switching fields.
+      targetX += hoverX * (1 - best);
+      targetY += hoverY * (1 - best);
       const scale = Math.min(1, this.limit / (Math.hypot(targetX, targetY) || 1));
       out[0] = targetX * scale; out[1] = targetY * scale;
       return out;

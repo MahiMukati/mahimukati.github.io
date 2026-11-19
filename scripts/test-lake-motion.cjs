@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { LakeMotion } = require('../dist/assets/lake-motion.js');
 
-const MAX_DISPLACEMENT = 16;
+const MAX_DISPLACEMENT = 26;
 const magnitude = vector => Math.hypot(vector[0], vector[1]);
 
 function field(motion, x, y, now) {
@@ -54,18 +54,32 @@ test('event density cannot accumulate unbounded force along the same swipe', () 
   }
 });
 
-test('leaving preserves a brief wake, and expired trails and reset clear it', () => {
+test('leaving preserves a soft lingering wake, and expired trails and reset clear it', () => {
   const motion = new LakeMotion();
   motion.move(0, 0, 1000);
   motion.move(600, 0, 1008);
   motion.leave();
   assert.ok(magnitude(field(motion, 300, 24, 1010)) > 0.1, 'leave must not abruptly erase the wake');
-  assert.equal(magnitude(field(motion, 300, 24, 1200)), 0, 'the wake must expire after the history window');
+  assert.ok(magnitude(field(motion, 300, 24, 1250)) > 5, 'the wake must remain visible after a quarter second');
+  assert.equal(magnitude(field(motion, 300, 24, 1700)), 0, 'the wake must expire after the history window');
 
-  motion.move(300, 0, 1300);
-  assert.ok(magnitude(field(motion, 300, 24, 1301)) > 0.1);
+  motion.move(300, 0, 1800);
+  assert.ok(magnitude(field(motion, 300, 24, 1801)) > 0.1);
   motion.reset();
-  assert.equal(magnitude(field(motion, 300, 24, 1302)), 0, 'reset must clear pointer and trail state');
+  assert.equal(magnitude(field(motion, 300, 24, 1802)), 0, 'reset must clear pointer and trail state');
+});
+
+test('a lingering trail blends smoothly into a stationary cursor', () => {
+  const motion = new LakeMotion();
+  motion.move(0, 0, 1000);
+  motion.move(600, 0, 1008);
+  let previous = field(motion, 580, 24, 1008);
+  for (let now = 1016; now <= 1656; now += 8) {
+    const current = field(motion, 580, 24, now);
+    assert.ok(Math.hypot(current[0] - previous[0], current[1] - previous[1]) < 1,
+      'the trailing current must fade into hover without a sudden jump');
+    previous = current;
+  }
 });
 
 function staticResponse(intervals) {
@@ -120,7 +134,7 @@ function movingResponse(fps, includeStall) {
     motion.step(offset, velocity, 0, target[0], target[1], milliseconds / 1000);
     for (const value of [...offset, ...velocity]) assert.ok(Number.isFinite(value), 'a long frame must not destabilize the spring');
     peak = Math.max(peak, magnitude(offset));
-    assert.ok(magnitude(offset) <= 20, 'motion must stay softly bounded through a delayed frame');
+    assert.ok(magnitude(offset) <= MAX_DISPLACEMENT, 'motion must stay softly bounded through a delayed frame');
   }
   assert.ok(peak > 0.1, 'the simulation must actually exercise moving particles');
   assert.ok(magnitude(offset) < 0.05, 'the particles must return home after the trail expires');
