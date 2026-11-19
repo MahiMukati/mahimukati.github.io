@@ -13,9 +13,8 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/newsreader.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/fonts/noto-nastaliq-urdu.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="assets/lake.css?v=4">
-  <script src="assets/lake-motion.js?v=5" defer></script>
-  <script src="assets/lake-curtain.js?v=4" defer></script>
+  <link rel="stylesheet" href="assets/lake.css?v=3">
+  <script src="assets/lake-curtain.js?v=3" defer></script>
 </head>
 <body class="lake-home">
   <a class="lake-skip" href="#main">Skip to content</a>
@@ -33,7 +32,7 @@
     <div class="lake-scene">
       <img class="lake-fallback" src="assets/moraine-lake.avif" width="640" height="639" alt="Moraine Lake's turquoise water beneath the snow-covered Valley of the Ten Peaks in Banff" fetchpriority="high">
       <canvas id="lake-curtain" data-image="assets/moraine-lake.avif" role="img" tabindex="-1" aria-hidden="true" aria-label="Moraine Lake, formed from thousands of Urdu letters" aria-describedby="curtain-help"></canvas>
-      <p id="curtain-help" class="sr-only">Move your mouse to let the letters flow gently along its path, or click to send a ripple across the lake. With the artwork focused, use the arrow keys for a ripple and Space to pause or resume. Touch gestures leave vertical scrolling available.</p>
+      <p id="curtain-help" class="sr-only">Move your mouse to part the letters, drag to sweep the curtain, or click to send a ripple across the lake. With the artwork focused, use the arrow keys for a ripple and Space to pause or resume. Touch gestures leave vertical scrolling available.</p>
     </div>
     <!-- YOUR WORDS: your existing empty about field is preserved. -->
     <div id="about" class="lake-bio"></div>

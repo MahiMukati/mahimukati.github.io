@@ -21,9 +21,7 @@
   const sampleCanvas = document.createElement('canvas');
   const sampleContext = sampleCanvas.getContext('2d', { willReadFrequently: true });
   const photo = new Image();
-  const pointer = { x: -1000, y: -1000, active: false, down: false, startX: 0, startY: 0, travel: 0 };
-  const motion = new window.LakeMotion();
-  const target = new Float64Array(2);
+  const pointer = { x: -1000, y: -1000, active: false, down: false, startX: 0, startY: 0, previousX: 0, previousY: 0, vx: 0, vy: 0, travel: 0 };
   const ripples = [];
   let width = 0, height = 0, dpr = 1, rows = 0, columns = 0, cellWidth = 0;
   let particles;
@@ -31,6 +29,7 @@
   let motionOverride = null;
   let animationFrame = 0, lastFrame = 0, lastRender = 0, elapsed = 0, resizeFrame = 0;
   let interactionCount = 0, lastInteraction = 0;
+  let yaw = 0, pitch = 0, dragYaw = 0, dragPitch = 0, dragStartYaw = 0, dragStartPitch = 0;
   let renderCost = 0, lastMetricUpdate = 0, renderedFrames = 0;
   let gpu;
 
@@ -151,6 +150,7 @@
       attribute vec4 a_color;
       attribute vec2 a_offset;
       uniform vec2 u_size;
+      uniform vec4 u_rotation;
       uniform float u_wave;
       uniform float u_perspective;
       uniform float u_point_size;
@@ -159,8 +159,12 @@
       varying float v_glyph;
       void main() {
         float z = a_meta.x + a_meta.y * u_wave;
-        float scale = u_perspective / (u_perspective + z);
-        vec2 point = a_base * scale + a_offset;
+        float rotatedX = a_base.x * u_rotation.y + z * u_rotation.x;
+        float depth = -a_base.x * u_rotation.x + z * u_rotation.y;
+        float rotatedY = a_base.y * u_rotation.w - depth * u_rotation.z;
+        float depthY = a_base.y * u_rotation.z + depth * u_rotation.w;
+        float scale = u_perspective / (u_perspective + depthY);
+        vec2 point = vec2(rotatedX, rotatedY) * scale + a_offset;
         gl_Position = vec4(point.x * 2.0 / u_size.x, -point.y * 2.0 / u_size.y, 0.0, 1.0);
         gl_PointSize = min(u_max_point_size, u_point_size * a_meta.w * scale);
         v_color = a_color;
@@ -186,7 +190,7 @@
       backgroundPosition: gl.getAttribLocation(backgroundProgram, 'a_position'),
       base: gl.getAttribLocation(particleProgram, 'a_base'), meta: gl.getAttribLocation(particleProgram, 'a_meta'),
       color: gl.getAttribLocation(particleProgram, 'a_color'), offset: gl.getAttribLocation(particleProgram, 'a_offset'),
-      size: uniform('u_size'), wave: uniform('u_wave'), perspective: uniform('u_perspective'),
+      size: uniform('u_size'), rotation: uniform('u_rotation'), wave: uniform('u_wave'), perspective: uniform('u_perspective'),
       pointSize: uniform('u_point_size'), maxPointSize: uniform('u_max_point_size'), atlas: uniform('u_atlas'), atlasGrid: uniform('u_atlas_grid'),
       pointLimit: gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE)[1]
     };
@@ -220,7 +224,7 @@
   }
 
   function buildParticles() {
-    const targetCount = gl ? (width < 640 ? 13000 : 40000) : 5800;
+    const targetCount = gl ? (width < 640 ? 8600 : 26000) : 5800;
     columns = Math.max(64, Math.round(Math.sqrt(targetCount * width / height)));
     rows = Math.round(columns * height / width);
     cellWidth = width / columns;
@@ -252,9 +256,9 @@
         geometry[g + 3] = Math.sin(u * Math.PI * 5 + v * 3.5);
         geometry[g + 4] = Math.min(letters.length - 1, Math.floor(randomAt(index, 3) * letters.length));
         geometry[g + 5] = 0.89 + randomAt(index, 13) * 0.22;
-        colors[c] = clamp(Math.round(pixels[p] * 1.06 + 5), 0, 255);
-        colors[c + 1] = clamp(Math.round(pixels[p + 1] * 1.06 + 5), 0, 255);
-        colors[c + 2] = clamp(Math.round(pixels[p + 2] * 1.06 + 5), 0, 255);
+        colors[c] = clamp(Math.round((pixels[p] * 1.1 + 7) / 51), 0, 5) * 51;
+        colors[c + 1] = clamp(Math.round((pixels[p + 1] * 1.1 + 7) / 51), 0, 5) * 51;
+        colors[c + 2] = clamp(Math.round((pixels[p + 2] * 1.1 + 7) / 51), 0, 5) * 51;
         colors[c + 3] = Math.round(opacity * 255);
         count++;
       }
@@ -280,45 +284,55 @@
     if (gl) gl.viewport(0, 0, canvas.width, canvas.height);
     else staticContext.setTransform(dpr, 0, 0, dpr, 0, 0);
     buildParticles();
-    motion.radius = width < 640 ? 88 : Math.min(120, width * 0.1);
-    motion.reset();
-    pointer.active = pointer.down = false;
     ripples.length = 0;
     draw(performance.now(), 0, false);
     requestFrame();
   }
 
   function simulate(dt, now) {
-    motion.prepare(now);
-    if (!pointer.active && !motion.segments.length && !ripples.length && !hasDisplacement) return;
+    if (!pointer.active && !ripples.length && !hasDisplacement) return;
+    const radius = width < 640 ? 94 : Math.min(145, width * 0.12);
+    const radiusSquared = radius * radius;
+    const damping = Math.pow(0.855, dt);
     const geometry = particles.geometry, offset = particles.offset, velocity = particles.velocity;
-    let maximumEnergy = 0, maximumOffset = 0;
+    let maximumEnergy = 0;
     while (ripples.length && now - ripples[0].start >= 1450) ripples.shift();
     for (let i = 0; i < particles.count; i++) {
       const g = i * 6, p = i * 2;
       const baseX = geometry[g] + width / 2, baseY = geometry[g + 1] + height / 2;
-      motion.target(baseX, baseY, now, target);
+      let forceX = 0, forceY = 0;
+      if (pointer.active) {
+        const dx = baseX + offset[p] - pointer.x, dy = baseY + offset[p + 1] - pointer.y;
+        const distanceSquared = dx * dx + dy * dy;
+        if (distanceSquared < radiusSquared) {
+          const distance = Math.max(1, Math.sqrt(distanceSquared));
+          const falloff = (1 - distance / radius) ** 2;
+          const strength = pointer.down ? 4.7 : 3.0;
+          forceX = dx / distance * falloff * strength + pointer.vx * falloff * 0.018;
+          forceY = dy / distance * falloff * strength + pointer.vy * falloff * 0.018;
+        }
+      }
       for (let r = 0; r < ripples.length; r++) {
         const ripple = ripples[r];
         const dx = baseX - ripple.x, dy = baseY - ripple.y;
         const distance = Math.max(1, Math.sqrt(dx * dx + dy * dy));
         const age = (now - ripple.start) / 1000;
-        const ring = distance - age * 320;
-        if (Math.abs(ring) < 85) {
-          const strength = Math.cos(ring / 85 * Math.PI / 2) * 6 * (1 - age / 1.45);
-          target[0] += dx / distance * strength;
-          target[1] += dy / distance * strength;
+        const ring = distance - age * 380;
+        if (Math.abs(ring) < 70) {
+          const strength = Math.cos(ring / 70 * Math.PI / 2) * 1.65 * (1 - age / 1.45);
+          forceX += dx / distance * strength;
+          forceY += dy / distance * strength;
         }
       }
-      const scale = Math.min(1, motion.limit / (Math.hypot(target[0], target[1]) || 1));
-      motion.step(offset, velocity, p, target[0] * scale, target[1] * scale, dt);
-      maximumOffset = Math.max(maximumOffset, Math.hypot(offset[p], offset[p + 1]));
-      maximumEnergy = Math.max(maximumEnergy, Math.abs(offset[p]) + Math.abs(offset[p + 1]) + (Math.abs(velocity[p]) + Math.abs(velocity[p + 1])) / motion.omega);
+      velocity[p] = (velocity[p] + (forceX - offset[p] * 0.032) * dt) * damping;
+      velocity[p + 1] = (velocity[p + 1] + (forceY - offset[p + 1] * 0.032) * dt) * damping;
+      offset[p] += velocity[p] * dt;
+      offset[p + 1] += velocity[p + 1] * dt;
+      maximumEnergy = Math.max(maximumEnergy, Math.abs(offset[p]) + Math.abs(offset[p + 1]) + Math.abs(velocity[p]) + Math.abs(velocity[p + 1]));
     }
     hasDisplacement = maximumEnergy > 0.015;
     if (!hasDisplacement) { offset.fill(0); velocity.fill(0); }
     offsetsDirty = true;
-    canvas.dataset.displacement = maximumOffset.toFixed(2);
   }
 
   function drawStatic() {
@@ -347,7 +361,14 @@
     if (!particles || contextLost) return;
     const started = performance.now();
     if (!gl) { drawStatic(); return; }
-    if (animate && !userPaused()) simulate(dt, now);
+    if (animate && !userPaused()) {
+      if (!pointer.down) { dragYaw *= Math.pow(0.92, dt); dragPitch *= Math.pow(0.92, dt); }
+      const pointerYaw = pointer.active && !pointer.down ? (pointer.x / width - 0.5) * 0.032 : 0;
+      const pointerPitch = pointer.active && !pointer.down ? (pointer.y / height - 0.5) * 0.014 : 0;
+      yaw += (dragYaw + pointerYaw - yaw) * Math.min(1, 0.09 * dt);
+      pitch += (dragPitch + pointerPitch - pitch) * Math.min(1, 0.09 * dt);
+      simulate(dt, now);
+    }
     gl.disable(gl.BLEND);
     gl.useProgram(gpu.backgroundProgram);
     gl.bindBuffer(gl.ARRAY_BUFFER, gpu.quad);
@@ -371,6 +392,7 @@
     gl.enableVertexAttribArray(gpu.offset);
     gl.vertexAttribPointer(gpu.offset, 2, gl.FLOAT, false, 0, 0);
     gl.uniform2f(gpu.size, width, height);
+    gl.uniform4f(gpu.rotation, Math.sin(yaw), Math.cos(yaw), Math.sin(pitch), Math.cos(pitch));
     gl.uniform1f(gpu.wave, Math.sin(elapsed * 0.00032) * 1.7);
     gl.uniform1f(gpu.perspective, Math.max(1100, width * 1.45));
     gl.uniform1f(gpu.pointSize, tileSize * cellWidth / 7.1 * (width < 640 ? 1.04 : 1.08) * dpr);
@@ -385,6 +407,8 @@
     gl.disableVertexAttribArray(gpu.color);
     gl.disableVertexAttribArray(gpu.offset);
 
+    pointer.vx *= 0.85;
+    pointer.vy *= 0.85;
     renderCost = renderCost * 0.9 + (performance.now() - started) * 0.1;
     renderedFrames++;
     if (now - lastMetricUpdate > 1000) {
@@ -397,13 +421,14 @@
   function frame(now) {
     animationFrame = 0;
     if (!canAnimate()) return;
-    const interactive = pointer.active || motion.segments.length > 0 || ripples.length > 0 || hasDisplacement;
-    if (interactive || now - lastRender >= 1000 / 30 - 1) {
-      const milliseconds = lastFrame ? Math.min(150, now - lastFrame) : 16.67;
+    const interactive = pointer.active || pointer.down || ripples.length > 0;
+    const frameInterval = interactive && renderCost < 22 ? 1000 / 60 : 1000 / 30;
+    if (now - lastRender >= frameInterval - 1) {
+      const milliseconds = lastFrame ? Math.min(32, now - lastFrame) : 16.67;
       lastFrame = now;
       lastRender = now;
       elapsed += milliseconds;
-      draw(now, milliseconds / 1000, true);
+      draw(now, milliseconds / 16.67, true);
     }
     animationFrame = requestAnimationFrame(frame);
   }
@@ -424,8 +449,8 @@
   }
 
   function resetDisplacement() {
-    motion.reset();
-    pointer.travel = 0;
+    yaw = pitch = dragYaw = dragPitch = dragStartYaw = dragStartPitch = 0;
+    pointer.vx = pointer.vy = pointer.travel = 0;
     hasDisplacement = false;
     offsetsDirty = true;
     ripples.length = 0;
@@ -447,51 +472,53 @@
     requestFrame();
   }
 
-  function trackPointer(event) {
-    const rect = canvas.getBoundingClientRect();
-    const coalesced = event.getCoalescedEvents?.() || [];
-    const samples = coalesced.length ? coalesced : [event];
-    for (const sample of samples) {
-      const x = sample.clientX - rect.left, y = sample.clientY - rect.top;
-      motion.move(x, y, sample.timeStamp || performance.now());
-      pointer.x = x; pointer.y = y;
-      if (pointer.down) pointer.travel = Math.max(pointer.travel, Math.hypot(x - pointer.startX, y - pointer.startY));
-    }
+  canvas.addEventListener('pointermove', event => {
+    if (!canInteract() || userPaused()) return;
+    const point = localPointer(event);
+    pointer.vx = clamp(point.x - pointer.previousX, -40, 40);
+    pointer.vy = clamp(point.y - pointer.previousY, -40, 40);
+    pointer.previousX = point.x;
+    pointer.previousY = point.y;
+    pointer.x = point.x;
+    pointer.y = point.y;
     pointer.active = true;
+    if (pointer.down) {
+      const dx = point.x - pointer.startX;
+      const dy = point.y - pointer.startY;
+      pointer.travel = Math.max(pointer.travel, Math.hypot(dx, dy));
+      dragYaw = clamp(dragStartYaw + dx / width * 0.3, -0.2, 0.2);
+      dragPitch = clamp(dragStartPitch - dy / height * 0.11, -0.07, 0.07);
+    }
     recordInteraction();
     requestFrame();
-  }
+  }, { passive: true });
 
-  canvas.addEventListener('pointerenter', event => {
-    if (canInteract() && !userPaused()) trackPointer(event);
-  }, { passive: true });
-  canvas.addEventListener('pointermove', event => {
-    if (canInteract() && !userPaused()) trackPointer(event);
-  }, { passive: true });
   canvas.addEventListener('pointerdown', event => {
     if (!canInteract() || event.button !== 0 || userPaused()) return;
-    trackPointer(event);
-    pointer.startX = pointer.x; pointer.startY = pointer.y;
-    pointer.down = true;
-    pointer.travel = 0;
-  }, { passive: true });
-  canvas.addEventListener('pointerup', event => {
-    if (!canInteract() || !pointer.down) return;
     const point = localPointer(event);
-    pointer.travel = Math.max(pointer.travel, Math.hypot(point.x - pointer.startX, point.y - pointer.startY));
-    pointer.down = false;
-    if (pointer.travel < 8) makeRipple(point.x, point.y);
-    if (event.pointerType !== 'mouse') clearPointer();
+    pointer.x = pointer.startX = pointer.previousX = point.x;
+    pointer.y = pointer.startY = pointer.previousY = point.y;
+    pointer.active = pointer.down = true;
+    pointer.travel = 0;
+    dragStartYaw = dragYaw;
+    dragStartPitch = dragPitch;
+    canvas.setPointerCapture?.(event.pointerId);
+    recordInteraction();
+    requestFrame();
   }, { passive: true });
 
-  function clearPointer() { pointer.active = pointer.down = false; motion.leave(); }
-  canvas.addEventListener('pointerleave', event => {
-    // A fast exit may be the only event containing the last part of a sweep.
-    if (pointer.active && canInteract() && !userPaused()) trackPointer(event);
-    clearPointer();
+  canvas.addEventListener('pointerup', event => {
+    if (!canInteract() || !pointer.down) return;
+    pointer.down = false;
+    if (pointer.travel < 8) makeRipple(pointer.x, pointer.y);
+    if (event.pointerType !== 'mouse') pointer.active = false;
+    if (canvas.hasPointerCapture?.(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
   }, { passive: true });
+
+  function clearPointer() { pointer.active = pointer.down = false; }
+  canvas.addEventListener('pointerleave', () => { if (!pointer.down) pointer.active = false; });
   canvas.addEventListener('pointercancel', clearPointer, { passive: true });
-  window.addEventListener('pointerup', () => { pointer.down = false; }, { passive: true });
+  canvas.addEventListener('lostpointercapture', () => { pointer.down = false; });
   window.addEventListener('blur', clearPointer);
 
   function toggleMotion() {
