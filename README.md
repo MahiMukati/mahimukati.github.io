@@ -29,7 +29,7 @@ Put your own `<p>…</p>` elements inside them. The empty biography areas take u
 
 The current homepage styles live in `dist/assets/lake.css`. Its renderer is `dist/assets/lake-curtain.js`; the unchanged source photograph is `dist/assets/moraine-lake.avif`. Fonts are self-hosted under `dist/assets/fonts/` with their licenses.
 
-Move the mouse through the image to part the letters. Drag to bend the curtain; click for a ripple. With the canvas focused, arrow keys create a ripple and Space pauses or resumes. The footer also has a pause control. The renderer respects reduced-motion preferences and suspends itself when hidden or offscreen.
+Move the mouse through the image to part the letters. Drag to bend the curtain; click for a ripple. With the canvas focused, arrow keys create a ripple and Space pauses or resumes. The renderer respects reduced-motion preferences and suspends itself when hidden or offscreen.
 
 The previous version's portrait toggle and project previews remain available at `/previous/`. Raw Gallery JPEGs remain local and are excluded from publication; the old version uses metadata-free WebP portraits.
 
@@ -88,6 +88,6 @@ Custom domains: https://developers.cloudflare.com/pages/configuration/custom-dom
 
 All sixteen HTML files (current and preserved) pass static link and heading checks. Current secondary routes and the preserved homepage/project index were checked in the browser at 320px, 768px, and 1440px. The new homepage has desktop, tablet, and phone visual checks.
 
-Interactive browser checks cover dragging, keyboard ripples, pause/resume, and the archive link. An isolated local test fixture verifies simulated reduced-motion preference, explicit motion opt-in, actual WebGL context loss, photo fallback, and context restoration. That fixture lives in ignored `.work/` and is not published. JavaScript syntax and git whitespace checks pass. All case-study factual copy is preserved.
+Interactive browser checks cover dragging, keyboard ripples, keyboard pause/resume, and the social links over the artwork. An isolated local test fixture verifies simulated reduced-motion preference, explicit motion opt-in, actual WebGL context loss, photo fallback, and context restoration. That fixture lives in ignored `.work/` and is not published. JavaScript syntax and git whitespace checks pass. All case-study factual copy is preserved.
 
 No account system, contact form backend, analytics, or tracking is included.

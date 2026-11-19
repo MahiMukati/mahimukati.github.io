@@ -19,6 +19,10 @@ button{font:inherit;color:inherit}
 .lake-header nav{display:flex;gap:24px;align-items:center;font-size:14px}
 .lake-header nav a{padding:9px 0}
 .lake-header nav a[aria-current=page]{text-decoration:underline;text-decoration-color:#94958e}
+.lake-home{min-height:100svh;display:flex;flex-direction:column}
+.lake-home>.lake-header{flex-shrink:0}
+.lake-home>main{display:flex;flex:1;flex-direction:column}
+.lake-home .lake-scene{flex:1 0 auto}
 .lake-intro{padding:68px 40px 0}
 .lake-intro h1{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;margin:0;font:400 48px/1.2 Newsreader,Georgia,serif;letter-spacing:-1.2px}
 .urdu-name{display:inline-block;font:400 34px/1.6 'Noto Nastaliq Urdu',serif;color:var(--lake-accent);letter-spacing:0;transform:translateY(-3px)}
@@ -32,21 +36,15 @@ button{font:inherit;color:inherit}
 .lake-scene.is-ready .lake-fallback{opacity:0;visibility:hidden}
 .lake-bio:empty{display:none}
 .lake-bio:not(:empty){max-width:680px;margin:36px auto;padding:0 24px;font-size:17px}
-.lake-footer{min-height:144px;padding:28px 40px;display:flex;align-items:center;justify-content:space-between;gap:24px}
-.lake-signature{font:400 60px/1 'Mr De Haviland',cursive;transform:rotate(-7deg);min-width:100px}
-.lake-signature:hover{text-decoration:none}
-.lake-options{display:flex;align-items:center;gap:24px;color:#6d7773;font-size:12px;margin-left:auto;margin-right:36px}
-.lake-options button{border:0;padding:10px 0;background:none;cursor:pointer;font-size:inherit}
-.lake-options button:hover{text-decoration:underline;text-underline-offset:5px}
-.lake-options a{padding:10px 0}
-.lake-socials{display:flex;gap:17px;align-items:center}
-.lake-socials a{display:flex;align-items:center;justify-content:center;width:25px;height:40px;color:#575b55;transition:color .2s,transform .2s}
-.lake-socials a:hover{color:var(--lake-accent);transform:translateY(-2px)}
+.lake-socials{position:absolute;right:clamp(16px,3vw,40px);bottom:24px;z-index:2;display:flex;gap:10px;align-items:center}
+.lake-socials a{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid rgba(255,254,249,.45);border-radius:12px;background:rgba(255,254,249,.88);color:#173d42;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .2s,transform .2s}
+.lake-socials a:hover{background:var(--lake-paper);transform:translateY(-2px)}
+.lake-socials a:focus-visible{outline:2px solid var(--lake-paper);outline-offset:4px}
 .lake-socials svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .lake-socials a:first-child svg{fill:currentColor;stroke:none}
 @media(min-width:1700px){.lake-scene{height:1100px}}
-@media(max-width:800px){.lake-header{padding-inline:16px}.lake-header nav{gap:18px}.lake-intro{padding:76px 16px 0}.lake-intro h1{font-size:38px;gap:14px;letter-spacing:-.8px}.urdu-name{font-size:29px}.lake-intro>p{font-size:19px}.lake-footer{padding:24px 16px;min-height:105px}.lake-options{margin-right:12px;gap:16px}.lake-signature{font-size:52px;min-width:70px}}
-@media(max-width:500px){.lake-header nav{gap:16px;font-size:13px}.lake-wordmark{font-size:18px}.lake-intro{padding-top:62px}.lake-intro h1{font-size:37px;gap:14px}.urdu-name{font-size:27px}.lake-intro>p{font-size:18px}.lake-scene{height:560px;margin-top:12px}.lake-footer{flex-wrap:wrap;gap:8px 24px;min-height:130px}.lake-socials{margin-left:auto;order:2}.lake-signature{order:1}.lake-options{order:3;flex-basis:100%;justify-content:flex-end;margin:0;font-size:12px}.lake-options button,.lake-options a{padding-block:5px}}
+@media(max-width:800px){.lake-header{padding-inline:16px}.lake-header nav{gap:18px}.lake-intro{padding:76px 16px 0}.lake-intro h1{font-size:38px;gap:14px;letter-spacing:-.8px}.urdu-name{font-size:29px}.lake-intro>p{font-size:19px}}
+@media(max-width:500px){.lake-header nav{gap:16px;font-size:13px}.lake-wordmark{font-size:18px}.lake-intro{padding-top:62px}.lake-intro h1{font-size:37px;gap:14px}.urdu-name{font-size:27px}.lake-intro>p{font-size:18px}.lake-scene{height:560px;margin-top:12px}.lake-socials{right:16px;bottom:16px;gap:8px}}
 @media(max-width:350px){.lake-header nav{gap:12px;font-size:12px}.lake-wordmark{font-size:17px}.lake-intro h1{font-size:32px}.urdu-name{font-size:24px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
 /* The same quiet frame continues through the existing project and writing pages. */
