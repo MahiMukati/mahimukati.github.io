@@ -1,8 +1,12 @@
 # Mahi's portfolio website
 
-A small, buildless portfolio with editorial typography inspired by the supplied Canva presentation, and a lake-and-forest palette from the supplied photograph. Manrope is paired with Instrument Serif italic; both fonts are self-hosted with their licenses. The homepage biography areas remain intentionally blank for Mahi to write. Writing has no entries.
+A buildless personal portfolio. The current homepage follows the quiet composition of nabeehaahmed.com: a serif name, a short welcome, and a large interactive image made from Urdu letters. The image is the supplied Moraine Lake photograph. The original photo stays as a fallback while the font and letter curtain load.
 
 Live site: https://mahis-portfolio.poisedpath2.chatgpt.site
+
+Previous design: https://mahis-portfolio.poisedpath2.chatgpt.site/previous/
+
+The complete earlier forest/editorial design is preserved under `dist/previous/`, including its pages, fonts, images, CSS, and JavaScript. Do not overwrite or remove this archive when changing the current design.
 
 ## Local preview
 
@@ -18,21 +22,23 @@ Open http://127.0.0.1:4173. After editing, refresh the browser. Stop the server 
 
 Edit `dist/index.html`. Search for `YOUR WORDS`. Two empty divs are ready for your own paragraphs:
 
-- `#introduction`: beneath the name, beside the portrait on desktop.
-- `#about`: below the portrait.
+- `#introduction`: beneath the name and welcome.
+- `#about`: below the letter curtain.
 
 Put your own `<p>…</p>` elements inside them. The empty biography areas take up no space until text is added. Use an `<a href="…">…</a>` for a link. No generated biography or sample copy is included.
 
-The portrait is styled in `dist/assets/style.css` under `.portrait`. It uses a sage duotone by default; the “View in color” button restores the original color. The two metadata-free WebP files live in `dist/assets/Gallery/`. Original Gallery JPEGs remain local and are excluded from source synchronization and the published output.
+The current homepage styles live in `dist/assets/lake.css`. Its renderer is `dist/assets/lake-curtain.js`; the unchanged source photograph is `dist/assets/moraine-lake.avif`. Fonts are self-hosted under `dist/assets/fonts/` with their licenses.
 
-The homepage project index updates its image preview on pointer hover or keyboard focus. Project links work without JavaScript. Animation respects reduced-motion preferences. All case-study facts and attributions are preserved.
+Move the mouse through the image to part the letters. Drag to bend the curtain; click for a ripple. With the canvas focused, arrow keys create a ripple and Space pauses or resumes. The footer also has a pause control. The renderer respects reduced-motion preferences and suspends itself when hidden or offscreen.
+
+The previous version's portrait toggle and project previews remain available at `/previous/`. Raw Gallery JPEGs remain local and are excluded from publication; the old version uses metadata-free WebP portraits.
 
 ## Edit projects and writing
 
 - Project grid: `dist/projects/index.html`.
 - Detail pages: `dist/projects/amd-schola/index.html`, `impulseguard/index.html`, `mysh/index.html`, and `jraw/index.html`.
 - Writing index: `dist/writing/index.html`. Add real writing only when ready. For each post, create `dist/writing/your-post-slug/index.html`, use the same shared stylesheet, and link it from the writing index.
-- Colors, widths, typography, responsive layout: `dist/assets/style.css`.
+- Current colors, typography, responsive layout: `dist/assets/lake.css`. Existing project layout foundations: `dist/assets/style.css`.
 - Contact links and navigation are ordinary HTML links. Update them in each page if needed.
 
 Paths use relative links so the ordinary pages work at a domain root or under a subdirectory. The custom 404 uses root-relative links because it can be served at any missing URL; adjust those links if deploying under a GitHub Pages project subpath.
@@ -80,4 +86,8 @@ Custom domains: https://developers.cloudflare.com/pages/configuration/custom-dom
 
 ## Verification
 
-The seven content pages and custom 404 were checked in the browser at 320px, 768px, and 1440px, with additional visual review at 390px. Checks cover navigation, direct nested routes, images, blank biography areas, empty writing, keyboard project previews, the portrait toggle, heading wrapping, and horizontal overflow. Browser QA uses the Codex browser tools. No account system, contact form backend, analytics, or tracking is included.
+All sixteen HTML files (current and preserved) pass static link and heading checks. Current secondary routes and the preserved homepage/project index were checked in the browser at 320px, 768px, and 1440px. The new homepage has desktop, tablet, and phone visual checks.
+
+Interactive browser checks cover dragging, keyboard ripples, pause/resume, and the archive link. An isolated local test fixture verifies simulated reduced-motion preference, explicit motion opt-in, actual WebGL context loss, photo fallback, and context restoration. That fixture lives in ignored `.work/` and is not published. JavaScript syntax and git whitespace checks pass. All case-study factual copy is preserved.
+
+No account system, contact form backend, analytics, or tracking is included.
