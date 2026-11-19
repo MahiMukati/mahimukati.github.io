@@ -37,8 +37,8 @@ button{font:inherit;color:inherit}
 .lake-bio:empty{display:none}
 .lake-bio:not(:empty){max-width:680px;margin:36px auto;padding:0 24px;font-size:17px}
 .lake-socials{position:absolute;right:clamp(16px,3vw,40px);bottom:24px;z-index:2;display:flex;gap:10px;align-items:center}
-.lake-socials a{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid rgba(255,254,249,.45);border-radius:12px;background:rgba(255,254,249,.88);color:#173d42;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .2s,transform .2s}
-.lake-socials a:hover{background:var(--lake-paper);transform:translateY(-2px)}
+.lake-socials a{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid rgba(255,254,249,.18);border-radius:12px;background:#123c40;color:#fffef9;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .2s,transform .2s}
+.lake-socials a:hover{background:#1c5155;transform:translateY(-2px)}
 .lake-socials a:focus-visible{outline:2px solid var(--lake-paper);outline-offset:4px}
 .lake-socials svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .lake-socials a:first-child svg{fill:currentColor;stroke:none}
