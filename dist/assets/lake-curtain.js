@@ -10,7 +10,10 @@
   const pauseButton = document.querySelector('[data-curtain-pause]');
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const letters = [...'ابتٹثجچحخدڈرڑزژسشصضطظعغفقکگلمنںوہھیے'];
-  const paper = '#fffef9';
+  const paperColors = { light: '#dce6e8', dark: '#123c40' };
+  const paperChannels = { light: [220 / 255, 230 / 255, 232 / 255], dark: [18 / 255, 60 / 255, 64 / 255] };
+  const currentTheme = () => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+  let theme = currentTheme();
   const atlasColumns = 7;
   const atlasRows = Math.ceil(letters.length / atlasColumns);
   const tileSize = 26;
@@ -132,6 +135,7 @@
     `, `
       precision mediump float;
       varying float v_y;
+      uniform vec3 u_paper;
       void main() {
         float amount = 0.0;
         if (v_y < 0.13) amount = 0.0;
@@ -139,9 +143,8 @@
         else if (v_y < 0.39) amount = mix(0.06, 0.72, (v_y - 0.25) / 0.14);
         else if (v_y < 0.55) amount = mix(0.72, 0.96, (v_y - 0.39) / 0.16);
         else amount = mix(0.96, 1.0, (v_y - 0.55) / 0.45);
-        vec3 paper = vec3(1.0, 254.0/255.0, 249.0/255.0);
         vec3 ground = vec3(12.0/255.0, 36.0/255.0, 42.0/255.0);
-        gl_FragColor = vec4(mix(paper, ground, amount), 1.0);
+        gl_FragColor = vec4(mix(u_paper, ground, amount), 1.0);
       }
     `);
     const particleProgram = program(`
@@ -188,6 +191,7 @@
       backgroundProgram, particleProgram,
       quad: gl.createBuffer(), geometry: gl.createBuffer(), colors: gl.createBuffer(), offsets: gl.createBuffer(), texture: gl.createTexture(),
       backgroundPosition: gl.getAttribLocation(backgroundProgram, 'a_position'),
+      backgroundColor: gl.getUniformLocation(backgroundProgram, 'u_paper'),
       base: gl.getAttribLocation(particleProgram, 'a_base'), meta: gl.getAttribLocation(particleProgram, 'a_meta'),
       color: gl.getAttribLocation(particleProgram, 'a_color'), offset: gl.getAttribLocation(particleProgram, 'a_offset'),
       size: uniform('u_size'), rotation: uniform('u_rotation'), wave: uniform('u_wave'), perspective: uniform('u_perspective'),
@@ -337,7 +341,7 @@
 
   function drawStatic() {
     staticContext.globalAlpha = 1;
-    staticContext.fillStyle = paper;
+    staticContext.fillStyle = paperColors[theme];
     staticContext.fillRect(0, 0, width, height);
     const ground = staticContext.createLinearGradient(0, 0, 0, height);
     ground.addColorStop(0.13, 'rgba(12,36,42,0)');
@@ -371,6 +375,7 @@
     }
     gl.disable(gl.BLEND);
     gl.useProgram(gpu.backgroundProgram);
+    gl.uniform3fv(gpu.backgroundColor, paperChannels[theme]);
     gl.bindBuffer(gl.ARRAY_BUFFER, gpu.quad);
     gl.enableVertexAttribArray(gpu.backgroundPosition);
     gl.vertexAttribPointer(gpu.backgroundPosition, 2, gl.FLOAT, false, 0, 0);
@@ -541,6 +546,11 @@
     }
   });
 
+  window.addEventListener('portfolio:themechange', () => {
+    theme = currentTheme();
+    // Redraw the background even while paused or respecting reduced motion.
+    if (loaded && !contextLost) draw(performance.now(), 0, false);
+  });
   document.addEventListener('visibilitychange', () => { clearPointer(); syncMotion(); });
   motionPreference.addEventListener('change', () => {
     motionOverride = null;

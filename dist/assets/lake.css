@@ -2,7 +2,8 @@
 @font-face{font-family:'Noto Nastaliq Urdu';src:url('fonts/noto-nastaliq-urdu.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:'Mr De Haviland';src:url('fonts/mr-de-haviland.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:Manrope;src:url('fonts/manrope-regular.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap}
-:root{color-scheme:light;--lake-paper:#fffef9;--lake-ink:#343332;--lake-muted:#6d7773;--lake-accent:#397f88;--lake-line:#eeefea}
+:root{color-scheme:light;--lake-paper:#dce6e8;--lake-ink:#183b40;--lake-muted:#506a70;--lake-accent:#286a74;--lake-line:#c1d0d3;--lake-surface:#cbdade}
+:root[data-theme=dark]{color-scheme:dark;--lake-paper:#123c40;--lake-ink:#fffef9;--lake-muted:#b6ced0;--lake-accent:#91c7ca;--lake-line:#31595e;--lake-surface:#254f54}
 *{box-sizing:border-box}
 html{min-width:280px;scroll-behavior:smooth}
 body{margin:0;background:var(--lake-paper);color:var(--lake-ink);font:400 16px/1.6 Manrope,Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -18,7 +19,13 @@ button{font:inherit;color:inherit}
 .lake-wordmark{font:400 19px/1 Newsreader,Georgia,serif;white-space:nowrap}
 .lake-header nav{display:flex;gap:24px;align-items:center;font-size:14px}
 .lake-header nav a{padding:9px 0}
-.lake-header nav a[aria-current=page]{text-decoration:underline;text-decoration-color:#94958e}
+.lake-header nav a[aria-current=page]{text-decoration:underline;text-decoration-color:var(--lake-muted)}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;padding:0;border:1px solid var(--lake-line);border-radius:50%;background:transparent;color:var(--lake-ink);cursor:pointer}
+.theme-toggle:hover{background:var(--lake-surface)}
+.theme-toggle svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.theme-icon-sun{display:none}
+[data-theme=dark] .theme-icon-sun{display:block}
+[data-theme=dark] .theme-icon-moon{display:none}
 .lake-home{min-height:100svh;display:flex;flex-direction:column}
 .lake-home>.lake-header{flex-shrink:0}
 .lake-home>main{display:flex;flex:1;flex-direction:column}
@@ -39,16 +46,18 @@ button{font:inherit;color:inherit}
 .lake-socials{position:absolute;right:clamp(16px,3vw,40px);bottom:24px;z-index:2;display:flex;gap:10px;align-items:center}
 .lake-socials a{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid rgba(255,254,249,.18);border-radius:12px;background:#123c40;color:#fffef9;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .2s,transform .2s}
 .lake-socials a:hover{background:#1c5155;transform:translateY(-2px)}
-.lake-socials a:focus-visible{outline:2px solid var(--lake-paper);outline-offset:4px}
+.lake-socials a:focus-visible{outline:2px solid #fffef9;outline-offset:4px}
 .lake-socials svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .lake-socials a:first-child svg{fill:currentColor;stroke:none}
 @media(min-width:1700px){.lake-scene{height:1100px}}
 @media(max-width:800px){.lake-header{padding-inline:16px}.lake-header nav{gap:18px}.lake-intro{padding:76px 16px 0}.lake-intro h1{font-size:38px;gap:14px;letter-spacing:-.8px}.urdu-name{font-size:29px}.lake-intro>p{font-size:19px}}
-@media(max-width:500px){.lake-header nav{gap:16px;font-size:13px}.lake-wordmark{font-size:18px}.lake-intro{padding-top:62px}.lake-intro h1{font-size:37px;gap:14px}.urdu-name{font-size:27px}.lake-intro>p{font-size:18px}.lake-scene{height:560px;margin-top:12px}.lake-socials{right:16px;bottom:16px;gap:8px}}
-@media(max-width:350px){.lake-header nav{gap:12px;font-size:12px}.lake-wordmark{font-size:17px}.lake-intro h1{font-size:32px}.urdu-name{font-size:24px}}
+@media(max-width:500px){.lake-header nav{gap:10px;font-size:13px}.lake-wordmark{font-size:18px}.lake-intro{padding-top:62px}.lake-intro h1{font-size:37px;gap:14px}.urdu-name{font-size:27px}.lake-intro>p{font-size:18px}.lake-scene{height:560px;margin-top:12px}.lake-socials{right:16px;bottom:16px;gap:8px}}
+@media(max-width:350px){.lake-header{height:auto;min-height:88px;flex-wrap:wrap;gap:4px;padding:8px 12px}.lake-header nav{width:100%;justify-content:space-between;gap:6px;font-size:12px}.lake-wordmark{font-size:17px}.lake-intro h1{font-size:32px}.urdu-name{font-size:24px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
 /* The same quiet frame continues through the existing project and writing pages. */
-body:not(.lake-home){--paper:var(--lake-paper);--ink:var(--lake-ink);--pine:var(--lake-accent);--muted:#6d7773;--wide:1120px;--gutter:clamp(20px,4vw,60px)}
+body:not(.lake-home){--paper:var(--lake-paper);--ink:var(--lake-ink);--pine:var(--lake-accent);--muted:var(--lake-muted);--wide:1120px;--gutter:clamp(20px,4vw,60px)}
+body:not(.lake-home) .project-detail code,body:not(.lake-home) .project-figure--mark{background:var(--lake-surface)}
+body:not(.lake-home)::selection,body:not(.lake-home) ::selection{background:var(--lake-accent);color:var(--lake-paper)}
 body:not(.lake-home)::before{display:none}
 body:not(.lake-home) .projects-content{padding-top:70px}
 body:not(.lake-home) .page-title,body:not(.lake-home) .project-detail h1,body:not(.lake-home) .error-title{font-family:Newsreader,Georgia,serif;font-size:48px;line-height:1.2;letter-spacing:-1px;font-weight:400}
