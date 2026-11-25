@@ -1,0 +1,24 @@
+/* The selected photo-stack design, scoped to the homepage galleries. */
+.photo-stack{position:relative;width:100%;min-width:0;margin:0}
+.photo-stack-stage{position:relative;width:100%;aspect-ratio:540/420;isolation:isolate;touch-action:pan-y;user-select:none;-webkit-user-select:none;perspective:1200px}
+.photo-stack-image{display:none;position:absolute;inset:10% 9%;width:82%;height:80%;object-fit:cover;border:8px solid var(--lake-paper);pointer-events:none;transform-origin:50% 85%;transition:transform 650ms cubic-bezier(.22,.7,.2,1),opacity 400ms ease}
+.photo-stack-image--logo{object-fit:contain;background:#fff;padding:clamp(16px,2vw,28px)}
+.photo-stack-image--screenshot{object-fit:contain;background:#fff}
+.photo-stack-image--chai{object-position:50% 65%}
+.photo-stack-image.is-active,.photo-stack.is-ready .photo-stack-image{display:block}
+.photo-stack-image[data-position="0"]{z-index:3;transform:translate(0,0) rotate(-3deg)}
+.photo-stack-image[data-position="1"]{z-index:2;transform:translate(7%,-3%) rotate(7deg)}
+.photo-stack-image[data-position="2"]{z-index:1;transform:translate(-6%,-4%) rotate(-9deg)}
+.photo-stack-controls{visibility:hidden;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:8px 6% 0}
+.photo-stack.is-ready .photo-stack-controls{visibility:visible}
+.photo-stack-arrows{display:flex;gap:8px}
+.photo-stack-arrow{display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;padding:0;border:0;border-radius:50%;background:var(--lake-surface);color:var(--lake-ink);cursor:pointer;transition:background 180ms ease,transform 160ms ease}
+.photo-stack-arrow:hover{background:var(--lake-ink);color:var(--lake-paper)}
+.photo-stack-arrow:active{transform:scale(.94)}
+.photo-stack-arrow svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.photo-stack-dots{display:flex}
+.photo-stack-dot{display:flex;align-items:center;justify-content:center;width:30px;height:44px;padding:0;border:0;background:transparent;cursor:pointer}
+.photo-stack-dot::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--lake-muted);opacity:.4;transition:transform 250ms ease,opacity 250ms ease}
+.photo-stack-dot[aria-current=true]::before{opacity:1;background:var(--lake-ink);transform:scale(1.4)}
+.photo-stack-caption{margin:8px 6% 0;color:var(--lake-muted);font-size:13px;min-height:21px}
+@media(prefers-reduced-motion:reduce){.photo-stack-image,.photo-stack-arrow,.photo-stack-dot::before{transition:none}}

@@ -75,7 +75,7 @@
     canvas.dataset.state = reduced ? 'reduced-motion' : (!gl || userPaused() || document.hidden || !inView ? 'paused' : 'ready');
     if (pauseButton) {
       pauseButton.hidden = !gl;
-      pauseButton.textContent = reduced ? 'Enable motion' : (userPaused() ? 'Resume motion' : 'Pause motion');
+      pauseButton.textContent = reduced ? 'enable motion' : (userPaused() ? 'resume motion' : 'pause motion');
       pauseButton.setAttribute('aria-pressed', String(userPaused()));
     }
   }

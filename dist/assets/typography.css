@@ -1,0 +1,2 @@
+/* Keep all site copy and future controls in the same lowercase voice. */
+html,body,button,input,textarea,select{text-transform:lowercase}

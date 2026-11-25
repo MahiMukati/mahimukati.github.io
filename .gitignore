@@ -2,10 +2,11 @@
 node_modules/
 .work/
 .taste-skill/
+.openai/
 *.tar.gz
 *.zip
 
-# Keep original personal photos local; publish only selected, sanitized assets.
+# Publish optimized WebP copies; keep camera originals local.
 /dist/assets/Gallery/*.[jJ][pP][gG]
 /dist/assets/Gallery/*.[jJ][pP][eE][gG]
 /out/

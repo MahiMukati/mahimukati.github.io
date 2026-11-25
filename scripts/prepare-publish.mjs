@@ -7,7 +7,7 @@ const source = path.join(project, 'dist');
 const output = path.join(project, 'out');
 const marker = path.join(project, '.work', 'publish-output.json');
 
-// The generated directory is separate from the editable source and original photos.
+// Publish only the static site. Local archives and originals live outside dist/.
 if (realpathSync(source) !== source || !lstatSync(source).isDirectory()) {
   throw new Error('Expected dist to be a regular directory inside this project.');
 }
@@ -34,10 +34,10 @@ cpSync(source, output, {
   dereference: false,
   filter(filename) {
     const relative = path.relative(source, filename).split(path.sep).join('/');
-    const skip = path.basename(filename) === '.DS_Store'
+    const skip = ['.DS_Store', '.gitkeep'].includes(path.basename(filename))
       || /^assets\/Gallery\/[^/]+\.jpe?g$/i.test(relative);
     if (skip) omitted += 1;
     return !skip;
   },
 });
-console.log(`Prepared out/ for publication; excluded ${omitted} original-photo or system files.`);
+console.log(`Prepared out/ for GitHub Pages; excluded ${omitted} original-photo or system files.`);

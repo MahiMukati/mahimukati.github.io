@@ -7,7 +7,7 @@ if (portrait && portraitToggle) {
   portraitToggle.addEventListener('click', () => {
     const inColor = portrait.classList.toggle('is-original');
     portraitToggle.setAttribute('aria-pressed', String(inColor));
-    portraitToggle.textContent = inColor ? 'View in duotone' : 'View in color';
+    portraitToggle.textContent = inColor ? 'view in duotone' : 'view in color';
   });
 }
 const workLinks = document.querySelectorAll('[data-preview]');

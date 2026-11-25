@@ -4,57 +4,64 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>jraw · mahi mukati</title>
-    <meta name="description" content="Jraw is a JavaFX drawing application with shape editing, freehand drawing, save/load, and undo/redo, built with MVC and object-oriented design patterns.">
-    <meta property="og:image" content="https://mahis-portfolio.poisedpath2.chatgpt.site/assets/Gallery/portrait-small.webp">
+    <meta name="description" content="jraw is a javafx drawing application with shape editing, freehand drawing, save/load, and undo/redo, built with mvc and object-oriented design patterns.">
+    <meta property="og:image" content="https://mahimukati.github.io/assets/Gallery/portrait-small.webp">
     <meta property="og:type" content="article">
-    <meta property="og:title" content="Jraw · Mahi Mukati">
-    <meta property="og:description" content="A JavaFX drawing application built around MVC, reusable drawing tools, and undoable commands.">
+    <meta property="og:title" content="jraw · mahi mukati">
+    <meta property="og:description" content="a javafx drawing application built around mvc, reusable drawing tools, and undoable commands.">
     <meta name="theme-color" content="#E6E1D7">
     <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
-    <script src="../../assets/theme.js?v=11"></script>
+    <script src="../../assets/theme.js?v=12"></script>
     <link rel="stylesheet" href="../../assets/style.css?v=20261119c">
-  <link rel="stylesheet" href="../../assets/lake.css?v=11">
-    <script src="../../assets/site.js?v=20261119c" defer></script>
-  </head>
+  <link rel="stylesheet" href="../../assets/lake.css?v=15">
+    <script src="../../assets/site.js?v=20261119d" defer></script>
+    <script src="../../assets/name-morph.js?v=12" defer></script>
+  <link rel="stylesheet" href="../../assets/typography.css?v=1">
+  <link rel="canonical" href="https://mahimukati.github.io/projects/jraw/">
+  <meta property="og:url" content="https://mahimukati.github.io/projects/jraw/">
+</head>
   <body class="detail-page lake-secondary">
-    <a class="lake-skip" href="#main">Skip to content</a>
+    <a class="lake-skip" href="#main">skip to content</a>
     <header class="lake-header">
-    <a class="lake-wordmark" href="../../" aria-label="Mahi Mukati — home">Mahi Mukati</a>
-    <nav aria-label="Primary"><a href="../../">Home</a><a href="../../projects/" aria-current="page">Projects</a><a href="../../writing/">Writing</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark mode" title="Switch to dark mode" hidden><svg class="theme-icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 13.1A8.5 8.5 0 0 1 10.9 3.2 8.5 8.5 0 1 0 20.8 13.1Z"/></svg><svg class="theme-icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></nav>
+    <a class="lake-wordmark" href="../../" aria-label="mahi mukati — home" >
+      <canvas data-name-mark aria-hidden="true"></canvas>
+      <span class="name-mark-fallback" lang="ar" dir="rtl">ماحي</span>
+    </a>
+    <nav aria-label="primary"><a href="../../">home</a><a href="../../projects/" aria-current="page">projects</a><a href="../../writing/">writing</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="switch to dark mode" title="switch to dark mode" hidden><svg class="theme-icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 13.1A8.5 8.5 0 0 1 10.9 3.2 8.5 8.5 0 1 0 20.8 13.1Z"/></svg><svg class="theme-icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></nav>
   </header>
     <main id="main" class="project-detail">
       <a class="back-link" href="../">all projects</a>
       <h1><span>jraw</span></h1>
-      <p class="project-meta">november 2025 · CSC207, University of Toronto</p>
-      <p class="project-lede">A JavaFX drawing application with shape editing, freehand drawing, save/load, and undo/redo.</p>
+      <p class="project-meta">november 2025 · csc207, university of toronto</p>
+      <p class="project-lede">a javafx drawing application with shape editing, freehand drawing, save/load, and undo/redo.</p>
       <figure class="project-figure project-figure--artwork">
-        <img src="../../assets/jraw.webp" alt="Jraw's project artwork showing Bob Ross beside an easel with the Jraw wordmark." width="600" height="775" fetchpriority="high">
-        <figcaption>Project artwork.</figcaption>
+        <img src="../../assets/jraw.webp" alt="jraw's project artwork showing bob ross beside an easel with the jraw wordmark." width="600" height="775" fetchpriority="high">
+        <figcaption>project artwork.</figcaption>
       </figure>
-      <p>I developed Jraw with a team for Software Design, using MVC architecture to separate the interface from the model. We worked through Git branches, pull requests, and daily Scrum standups.</p>
+      <p>i developed jraw with a team for software design, using mvc architecture to separate the interface from the model. we worked through git branches, pull requests, and daily scrum standups.</p>
 
       <h2>a small drawing studio</h2>
-      <p>The application supports circles, rectangles, freehand squiggles, and multi-point polylines. Shapes can be selected and resized, with live previews, filled or outlined styles, and randomly generated colors.</p>
-      <p>Drawings live on a 500 × 500 canvas. Users can undo and redo changes, start a fresh canvas, or save and reopen drawings in a custom, versioned text format.</p>
+      <p>the application supports circles, rectangles, freehand squiggles, and multi-point polylines. shapes can be selected and resized, with live previews, filled or outlined styles, and randomly generated colors.</p>
+      <p>drawings live on a 500 × 500 canvas. users can undo and redo changes, start a fresh canvas, or save and reopen drawings in a custom, versioned text format.</p>
 
       <h2>design behind the tools</h2>
       <ul>
-        <li><strong>MVC</strong> separates drawing data, interface, and user actions.</li>
-        <li><strong>Command</strong> represents operations as <code>PaintCommand</code> objects and supports undo/redo.</li>
-        <li><strong>Observer</strong> keeps the view in sync with changes to the model.</li>
-        <li><strong>Strategy</strong> supplies different drawing behavior for each shape.</li>
-        <li><strong>Factory</strong> creates the appropriate shape-manipulation strategy.</li>
-        <li><strong>Visitor</strong> separates rendering through <code>DrawVisitor</code> from persistence through <code>SaveVisitor</code>.</li>
+        <li><strong>mvc</strong> separates drawing data, interface, and user actions.</li>
+        <li><strong>command</strong> represents operations as <code>PaintCommand</code> objects and supports undo/redo.</li>
+        <li><strong>observer</strong> keeps the view in sync with changes to the model.</li>
+        <li><strong>strategy</strong> supplies different drawing behavior for each shape.</li>
+        <li><strong>factory</strong> creates the appropriate shape-manipulation strategy.</li>
+        <li><strong>visitor</strong> separates rendering through <code>DrawVisitor</code> from persistence through <code>SaveVisitor</code>.</li>
       </ul>
 
       <h2>what i learned</h2>
-      <p>The project put object-oriented design patterns into practice within a working desktop interface. It also gave me experience with Java modules, JUnit tests for model and drawing behavior, and state-machine parsing with error handling for the saved file format.</p>
+      <p>the project put object-oriented design patterns into practice within a working desktop interface. it also gave me experience with java modules, junit tests for model and drawing behavior, and state-machine parsing with error handling for the saved file format.</p>
 
       <h2>built with</h2>
-      <p>Java 22, JavaFX, Maven, JUnit, the Java Platform Module System, and Git.</p>
+      <p>java 22, javafx, maven, junit, the java platform module system, and git.</p>
 
       <h2>source availability</h2>
-      <p>The code is private under university academic-integrity policies. <a href="mailto:mahi.mukati@mail.utoronto.ca?subject=Jraw">Contact me</a> to discuss the implementation or request a review.</p>
+      <p>the code is private under university academic-integrity policies. <a href="mailto:mahi.mukati@mail.utoronto.ca?subject=Jraw">contact me</a> to discuss the implementation or request a review.</p>
     </main>
     <footer class="detail-footer"><a href="../">all projects</a><a href="mailto:mahi.mukati@mail.utoronto.ca">get in touch</a></footer>
   </body>

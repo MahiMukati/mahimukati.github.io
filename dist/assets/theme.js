@@ -10,7 +10,7 @@
   try { choice = validTheme(window.localStorage.getItem(storageKey)); } catch (_) {}
 
   function updateButtons(theme) {
-    const action = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    const action = theme === 'dark' ? 'switch to light mode' : 'switch to dark mode';
     for (const button of buttons) {
       button.setAttribute('aria-label', action);
       button.title = action;
