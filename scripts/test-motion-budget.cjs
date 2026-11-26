@@ -46,6 +46,8 @@ async function paint(h){h.frame();h.advance();await settle()}
 (async()=>{
   const h=host();
   assert.equal(h.api.mobile,true,'A wide coarse-pointer device stays on the mobile budget');
+  assert.equal(h.api.lightweight,true,'Touch devices select prepared artwork before body parsing');
+  assert.equal(h.document.documentElement.dataset.renderMode,'lite');
   const order=[];let release;
   const first=h.api.enqueue(async()=>{order.push('first:start');await new Promise(resolve=>release=resolve);order.push('first:end')});
   const second=h.api.enqueue(()=>order.push('second'));
@@ -73,6 +75,7 @@ async function paint(h){h.frame();h.advance();await settle()}
   h.global.innerWidth=1200;h.global.dispatch('resize');h.advance(180);
   assert.equal(h.api.mobile,true);assert.equal(h.api.low,true,'Resizing never upgrades the current visit');
   h.pointer.matches=false;h.pointer.dispatch('change');assert.equal(h.api.mobile,false);assert.equal(h.api.low,true);
+  assert.equal(h.api.lightweight,true,'Rotation or pointer changes cannot enable native graphics mid-visit');
   h.pointer.matches=true;h.pointer.dispatch('change');assert.equal(h.api.mobile,true);assert.equal(h.api.low,true);
   assert.equal(host({savedLow:true}).api.low,true,'The low budget survives navigation during the visit');
 
@@ -82,5 +85,9 @@ async function paint(h){h.frame();h.advance();await settle()}
   const hiddenCost=host();hiddenCost.document.hidden=true;
   for(let i=0;i<30;i++){hiddenCost.advance(100);hiddenCost.api.report('lake',50)}
   assert.equal(hiddenCost.api.low,false,'Background time is not treated as rendering pressure');
+  const desktop=host({coarse:false,width:1280});
+  assert.equal(desktop.api.lightweight,false);
+  desktop.global.innerWidth=390;desktop.global.dispatch('resize');desktop.advance(180);
+  assert.equal(desktop.api.mobile,true);assert.equal(desktop.api.lightweight,false,'Existing desktop renderers retain their bounded resize profile');
   console.log('Motion budget checks passed: paint boundary, serialized/hidden startup, coarse devices, sustained downgrade, and session persistence.');
 })().catch(error=>{console.error(error);process.exitCode=1});

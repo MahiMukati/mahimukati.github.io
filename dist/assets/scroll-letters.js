@@ -1,5 +1,10 @@
 (() => {
   'use strict';
+  // Phones use prepared artwork: do not create native canvas contexts or
+  // rasterize thousands of complex glyphs during the initial page load.
+  if (window.PortfolioMotion?.lightweight ??
+      (matchMedia('(pointer: coarse)').matches || innerWidth < 768)) return;
+
 
   const canvas = document.querySelector('#scroll-letters');
   const main = canvas?.closest('main.home-journey');
@@ -179,7 +184,7 @@
         color: lifting ? colorAt(x, startY) : Math.floor(randomAt(seed, 9) * palette.length),
         size: spriteSize * (0.85 + randomAt(seed, 10) * 0.3),
         alpha: (lifting ? 0.46 : 0.35) + randomAt(seed, 11) * 0.3,
-        flickers: randomAt(seed, 14) < 0.01,
+        flickers: randomAt(seed, 14) < 0.05,
         flickerPeriod: 0.85 + randomAt(seed, 12) * 0.55,
         flickerPhase: randomAt(seed, 13), ox: 0, oy: 0, vx: 0, vy: 0,
       });

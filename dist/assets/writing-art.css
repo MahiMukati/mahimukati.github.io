@@ -1,0 +1,3 @@
+/* The arches use the same letter curtain, with the photograph's warm colors. */
+.writing-art{height:clamp(560px,75vw,960px);margin-top:0}
+@media(max-width:599px){.writing-art{height:560px}}

@@ -31,7 +31,7 @@
       if (!image.dataset.fullSrc) return;
       const mobile = isMobile();
       const sources = mobile
-        ? (motion?.low && image.dataset.lowSrcset) || image.dataset.mobileSrcset || image.dataset.srcset
+        ? ((motion?.lightweight || motion?.low) && image.dataset.lowSrcset) || image.dataset.mobileSrcset || image.dataset.srcset
         : image.dataset.srcset;
       const size = `${Math.max(1, Math.ceil(image.clientWidth || stage.clientWidth * 0.82))}px`;
       image.loading = 'eager';

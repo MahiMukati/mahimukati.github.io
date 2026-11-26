@@ -45,7 +45,8 @@ function host({ mobile = true, webgl = true, delayedDecode = false } = {}) {
     querySelector:selector=>selector==='#lake-curtain'?canvas:null,
     createElement:()=>({width:0,height:0,getContext:()=>context2d()}),
   });
-  const budget={mobile,low:false,debug:false,enqueue(task){jobs.push(task);return Promise.resolve()},subscribe:fn=>subscribers.push(fn),report(){}};
+  // Full renderer narrowed after desktop startup; phone startup is checked separately.
+  const budget={mobile,lightweight:false,low:false,debug:false,enqueue(task){jobs.push(task);return Promise.resolve()},subscribe:fn=>subscribers.push(fn),report(){}};
   const global=events({
     document,console,innerWidth:390,devicePixelRatio:3,performance:{now:()=>clock},
     matchMedia:()=>preference,PortfolioMotion:budget,

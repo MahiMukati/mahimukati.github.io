@@ -7,6 +7,9 @@
   const costs = new Map();
   const debug = new URLSearchParams(location.search).get('perf') === '1';
   let mobile = coarse.matches || innerWidth < 768;
+  // Keep this choice for the document lifetime, including phone rotation.
+  const lightweight = mobile;
+  document.documentElement.dataset.renderMode = lightweight ? 'lite' : 'full';
   let low = false, overBudgetSince = 0, lastReportAt = 0, resizeTimer;
   let queue = Promise.resolve();
   try { low = sessionStorage.getItem('portfolio-motion-low') === '1'; } catch {}
@@ -33,6 +36,7 @@
   }
   window.PortfolioMotion = Object.freeze({
     get mobile() { return mobile; },
+    get lightweight() { return lightweight; },
     get low() { return low; },
     get reduced() { return reduced.matches; },
     debug,

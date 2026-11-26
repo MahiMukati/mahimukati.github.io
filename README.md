@@ -16,7 +16,7 @@ Open http://127.0.0.1:4173. Edit files under `dist/` and refresh. Keep changes l
 
 - `dist/index.html`: homepage text, photo carousels, and links.
 - `dist/projects/index.html`: projects index; each project has its own subfolder.
-- `dist/writing/index.html`: writing index, currently empty.
+- `dist/writing/index.html`: writing index with the Córdoba letter artwork; no writing entries yet.
 - `dist/cv/index.html`: résumé retained from the previous public site.
 - `dist/assets/lake.css`: shared theme, header, and lake artwork styles.
 - `dist/assets/home-journey.css` and `photo-stack.css`: homepage layout and carousels.
@@ -48,7 +48,11 @@ No account system, contact-form backend, analytics, or tracking is included.
 
 ## Mobile rendering
 
-`dist/assets/motion-budget.js` serializes decorative startup after the first paint. Coarse-pointer devices and widths below 768px use smaller buffers and 30 FPS; sustained rendering pressure selects a 20 FPS profile for the rest of the tab session. Reduced-motion preferences stop continuous animation.
+`dist/assets/motion-budget.js` selects a rendering mode before the page body is parsed. Coarse-pointer devices and widths below 768px use prepared WebP artwork for the portrait, name, and lake. These visits never initialize canvas or WebGL, load the Urdu font, or rasterize glyphs. The mode stays fixed for the document lifetime so phone rotation cannot start the heavier effects.
+
+`mobile-artwork.js` adds 32 small image sprites across the homepage. CSS moves only sprites in visible sections, pauses them in background tabs, and respects reduced motion. Photo stacks cap active photos at their 600px variant. The mobile name and lake are static; desktop keeps the existing interactive artwork.
+
+For full rendering, decorative startup is serialized after the first paint. The existing bounded renderers and adaptive 30/20 FPS profiles remain available when a desktop window is resized.
 
 The floating-letter surface is viewport-sized with a reusable pool capped at 1,200 mobile particles (600 in the lower profile). The lake initializes only within 200px of the viewport and keeps its photo fallback if graphics fail. The name mark uses precomputed coordinates and sleeps between transitions. Carousels promote only nearby active cards to larger sources.
 
@@ -57,6 +61,7 @@ Add `?perf=1` to a local URL to expose low-frequency canvas size and particle di
 ```sh
 node scripts/test-motion-budget.cjs
 node scripts/test-lake-budget.cjs
+node scripts/test-mobile-startup.cjs
 ```
 
 For an iPhone check on the same Wi-Fi, serve **only** `dist/` on the local network:
@@ -68,3 +73,7 @@ python3 -m http.server 4176 --bind 0.0.0.0 --directory dist
 Open this Mac's LAN address on port 4176. Check cold loads, scrolling, carousel changes, rotation, and background/resume in Safari and Arc. Desktop viewport tests do not confirm real-device memory stability.
 
 Generated assets are already included; normal preview and publication still need no dependencies. To regenerate responsive photos or the lake palette, the optional `scripts/prepare-media.py` and `scripts/generate-lake-palette.py` utilities require Pillow. `scripts/generate-name-shapes.mjs` prepares a browser export fixture and imports its JSON to retain the approved calligraphy geometry.
+
+The optional `scripts/generate-mobile-art.cjs` and `scripts/generate-mobile-lake.mjs` utilities prepare the static mobile artwork using local Canvas and Pillow. Their file headers document the dependencies. Those tools run only during asset preparation; none of that rendering runs on phones.
+
+`scripts/generate-cordoba-art.mjs` prepares the writing page's source image, static mobile scenes, and warm-colored sprite sheet. It uses the same renderer style and optional tooling. The shared desktop curtain reads its photo and background color from the canvas's `data-image` and `data-ground` attributes.

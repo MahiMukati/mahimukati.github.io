@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "lakePortrait": {
+    "file": "lake-urdu.webp",
+    "width": 750,
+    "height": 1120,
+    "bytes": 607590,
+    "glyphs": 10462
+  },
+  "lakeLandscape": {
+    "file": "lake-urdu-wide.webp",
+    "width": 1120,
+    "height": 750,
+    "bytes": 582736,
+    "glyphs": 10464
+  },
+  "spriteSheet": {
+    "file": "urdu-sprites.webp",
+    "width": 192,
+    "height": 144,
+    "bytes": 4564,
+    "tilePixels": 48,
+    "cssTile": 24,
+    "cssBackgroundWidth": 96,
+    "cssBackgroundHeight": 72,
+    "cells": [
+      {
+        "glyph": "ب",
+        "x": 0,
+        "y": 0,
+        "width": 48,
+        "height": 48,
+        "color": [
+          134,
+          174,
+          220
+        ],
+        "cssX": 0,
+        "cssY": 0
+      },
+      {
+        "glyph": "ت",
+        "x": 48,
+        "y": 0,
+        "width": 48,
+        "height": 48,
+        "color": [
+          2,
+          138,
+          157
+        ],
+        "cssX": -24,
+        "cssY": 0
+      },
+      {
+        "glyph": "ح",
+        "x": 96,
+        "y": 0,
+        "width": 48,
+        "height": 48,
+        "color": [
+          128,
+          137,
+          153
+        ],
+        "cssX": -48,
+        "cssY": 0
+      },
+      {
+        "glyph": "د",
+        "x": 144,
+        "y": 0,
+        "width": 48,
+        "height": 48,
+        "color": [
+          1,
+          109,
+          203
+        ],
+        "cssX": -72,
+        "cssY": 0
+      },
+      {
+        "glyph": "ر",
+        "x": 0,
+        "y": 48,
+        "width": 48,
+        "height": 48,
+        "color": [
+          183,
+          180,
+          176
+        ],
+        "cssX": 0,
+        "cssY": -24
+      },
+      {
+        "glyph": "س",
+        "x": 48,
+        "y": 48,
+        "width": 48,
+        "height": 48,
+        "color": [
+          2,
+          112,
+          128
+        ],
+        "cssX": -24,
+        "cssY": -24
+      },
+      {
+        "glyph": "ع",
+        "x": 96,
+        "y": 48,
+        "width": 48,
+        "height": 48,
+        "color": [
+          84,
+          154,
+          229
+        ],
+        "cssX": -48,
+        "cssY": -24
+      },
+      {
+        "glyph": "ق",
+        "x": 144,
+        "y": 48,
+        "width": 48,
+        "height": 48,
+        "color": [
+          59,
+          84,
+          107
+        ],
+        "cssX": -72,
+        "cssY": -24
+      },
+      {
+        "glyph": "ل",
+        "x": 0,
+        "y": 96,
+        "width": 48,
+        "height": 48,
+        "color": [
+          158,
+          157,
+          155
+        ],
+        "cssX": 0,
+        "cssY": -48
+      },
+      {
+        "glyph": "م",
+        "x": 48,
+        "y": 96,
+        "width": 48,
+        "height": 48,
+        "color": [
+          36,
+          132,
+          207
+        ],
+        "cssX": -24,
+        "cssY": -48
+      },
+      {
+        "glyph": "ن",
+        "x": 96,
+        "y": 96,
+        "width": 48,
+        "height": 48,
+        "color": [
+          204,
+          203,
+          204
+        ],
+        "cssX": -48,
+        "cssY": -48
+      },
+      {
+        "glyph": "ے",
+        "x": 144,
+        "y": 96,
+        "width": 48,
+        "height": 48,
+        "color": [
+          54,
+          59,
+          36
+        ],
+        "cssX": -72,
+        "cssY": -48
+      }
+    ]
+  }
+}

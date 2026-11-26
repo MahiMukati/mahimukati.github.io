@@ -1,5 +1,10 @@
 (() => {
   'use strict';
+  // Phones use prepared artwork: do not create native canvas contexts or
+  // rasterize thousands of complex glyphs during the initial page load.
+  if (window.PortfolioMotion?.lightweight ??
+      (matchMedia('(pointer: coarse)').matches || innerWidth < 768)) return;
+
 
   const canvas = document.querySelector('#lake-curtain');
   const scene = canvas?.closest('.lake-scene');
@@ -15,6 +20,10 @@
   const letters = [...'ابتٹثجچحخدڈرڑزژسشصضطظعغفقکگلمنںوہھیے'];
   const paperColors = { light: '#e6e1d7', dark: '#123c40' };
   const paperChannels = { light: [230 / 255, 225 / 255, 215 / 255], dark: [18 / 255, 60 / 255, 64 / 255] };
+  const requestedGround = canvas.dataset.ground?.split(',').map(Number);
+  const ground = requestedGround?.length === 3 && requestedGround.every(value => Number.isFinite(value) && value >= 0 && value <= 255)
+    ? requestedGround : [12, 36, 42];
+  const groundChannels = ground.map(value => value / 255);
   const currentTheme = () => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
   let theme = currentTheme();
   const atlasColumns = 7;
@@ -140,6 +149,7 @@
       precision mediump float;
       varying float v_y;
       uniform vec3 u_paper;
+      uniform vec3 u_ground;
       void main() {
         float amount = 0.0;
         if (v_y < 0.13) amount = 0.0;
@@ -147,8 +157,7 @@
         else if (v_y < 0.39) amount = mix(0.06, 0.72, (v_y - 0.25) / 0.14);
         else if (v_y < 0.55) amount = mix(0.72, 0.96, (v_y - 0.39) / 0.16);
         else amount = mix(0.96, 1.0, (v_y - 0.55) / 0.45);
-        vec3 ground = vec3(12.0/255.0, 36.0/255.0, 42.0/255.0);
-        gl_FragColor = vec4(mix(u_paper, ground, amount), 1.0);
+        gl_FragColor = vec4(mix(u_paper, u_ground, amount), 1.0);
       }
     `);
     const particleProgram = program(`
@@ -196,6 +205,7 @@
       quad: gl.createBuffer(), geometry: gl.createBuffer(), colors: gl.createBuffer(), offsets: gl.createBuffer(), texture: gl.createTexture(),
       backgroundPosition: gl.getAttribLocation(backgroundProgram, 'a_position'),
       backgroundColor: gl.getUniformLocation(backgroundProgram, 'u_paper'),
+      groundColor: gl.getUniformLocation(backgroundProgram, 'u_ground'),
       base: gl.getAttribLocation(particleProgram, 'a_base'), meta: gl.getAttribLocation(particleProgram, 'a_meta'),
       color: gl.getAttribLocation(particleProgram, 'a_color'), offset: gl.getAttribLocation(particleProgram, 'a_offset'),
       size: uniform('u_size'), rotation: uniform('u_rotation'), wave: uniform('u_wave'), perspective: uniform('u_perspective'),
@@ -362,6 +372,7 @@
     gl.disable(gl.BLEND);
     gl.useProgram(gpu.backgroundProgram);
     gl.uniform3fv(gpu.backgroundColor, paperChannels[theme]);
+    gl.uniform3fv(gpu.groundColor, groundChannels);
     gl.bindBuffer(gl.ARRAY_BUFFER, gpu.quad);
     gl.enableVertexAttribArray(gpu.backgroundPosition);
     gl.vertexAttribPointer(gpu.backgroundPosition, 2, gl.FLOAT, false, 0, 0);

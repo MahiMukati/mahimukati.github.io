@@ -2,6 +2,11 @@
    Only the small fringe moves. Construction buffers are released immediately. */
 (() => {
   'use strict';
+  // Phones use prepared artwork: do not create native canvas contexts or
+  // rasterize thousands of complex glyphs during the initial page load.
+  if (window.PortfolioMotion?.lightweight ??
+      (matchMedia('(pointer: coarse)').matches || innerWidth < 768)) return;
+
   const runtime = window.PortfolioMotion;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const coarse = matchMedia('(pointer: coarse)');

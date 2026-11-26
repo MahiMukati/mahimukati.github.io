@@ -20,6 +20,10 @@ button{font:inherit;color:inherit}
 .lake-wordmark{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 104px;width:104px;height:60px;font:400 26px/1.8 "Noto Nastaliq Urdu",serif;letter-spacing:0;white-space:nowrap}
 .lake-wordmark canvas{display:block;width:104px;height:60px;visibility:hidden;pointer-events:none}
 .lake-wordmark.is-ready canvas{visibility:visible}
+.mobile-name{display:none}
+[data-render-mode=lite] .lake-wordmark{font-family:serif}
+[data-render-mode=lite] .lake-wordmark canvas,[data-render-mode=lite] .name-mark-fallback{display:none}
+[data-render-mode=lite] .mobile-name{display:block;width:104px;height:60px;object-fit:contain}
 .name-mark-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:translateY(-7px)}
 .lake-header nav{display:flex;gap:24px;align-items:center;font-size:14px}
 .lake-header nav a{padding:9px 0}
@@ -43,6 +47,9 @@ button{font:inherit;color:inherit}
 #lake-curtain:active{cursor:grabbing}
 #lake-curtain:focus-visible{outline-offset:-5px}
 .lake-fallback{display:block;width:100%;height:100%;object-fit:cover;object-position:center 48%;mask-image:linear-gradient(to bottom,transparent,black 28%);transition:opacity .5s ease}
+.lake-scene>picture{display:block;width:100%;height:100%}
+[data-render-mode=lite] .lake-fallback{mask-image:none;transition:none}
+[data-render-mode=lite] .lake-socials a{backdrop-filter:none;-webkit-backdrop-filter:none}
 .lake-scene.is-ready #lake-curtain{opacity:1}
 .lake-scene.is-ready .lake-fallback{opacity:0;visibility:hidden}
 .lake-bio:empty{display:none}

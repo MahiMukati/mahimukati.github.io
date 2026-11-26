@@ -1,0 +1,285 @@
+{
+  "version": 1,
+  "source": "../cordoba.webp",
+  "ground": [
+    38,
+    29,
+    24
+  ],
+  "palette": [
+    [
+      155,
+      125,
+      95
+    ],
+    [
+      202,
+      182,
+      159
+    ],
+    [
+      60,
+      39,
+      28
+    ],
+    [
+      120,
+      93,
+      70
+    ],
+    [
+      80,
+      54,
+      40
+    ],
+    [
+      117,
+      81,
+      58
+    ],
+    [
+      185,
+      156,
+      126
+    ],
+    [
+      88,
+      67,
+      53
+    ],
+    [
+      43,
+      31,
+      24
+    ],
+    [
+      29,
+      18,
+      13
+    ],
+    [
+      148,
+      106,
+      74
+    ],
+    [
+      164,
+      143,
+      116
+    ],
+    [
+      126,
+      109,
+      84
+    ],
+    [
+      112,
+      65,
+      43
+    ],
+    [
+      81,
+      44,
+      29
+    ],
+    [
+      234,
+      227,
+      218
+    ]
+  ],
+  "portrait": {
+    "file": "cordoba-urdu.webp",
+    "width": 750,
+    "height": 1120,
+    "bytes": 575708,
+    "glyphs": 10462
+  },
+  "wide": {
+    "file": "cordoba-urdu-wide.webp",
+    "width": 1120,
+    "height": 840,
+    "bytes": 607040,
+    "glyphs": 10381
+  },
+  "spriteSheet": {
+    "file": "cordoba-sprites.webp",
+    "width": 192,
+    "height": 144,
+    "bytes": 4474,
+    "tilePixels": 48,
+    "cssTile": 24,
+    "cssBackgroundWidth": 96,
+    "cssBackgroundHeight": 72,
+    "cells": [
+      {
+        "glyph": "ب",
+        "x": 0,
+        "y": 0,
+        "width": 48,
+        "height": 48,
+        "color": [
+          185,
+          156,
+          126
+        ],
+        "cssX": 0,
+        "cssY": 0
+      },
+      {
+        "glyph": "ت",
+        "x": 48,
+        "y": 0,
+        "width": 48,
+        "height": 48,
+        "color": [
+          80,
+          54,
+          40
+        ],
+        "cssX": -24,
+        "cssY": 0
+      },
+      {
+        "glyph": "ح",
+        "x": 96,
+        "y": 0,
+        "width": 48,
+        "height": 48,
+        "color": [
+          148,
+          106,
+          74
+        ],
+        "cssX": -48,
+        "cssY": 0
+      },
+      {
+        "glyph": "د",
+        "x": 144,
+        "y": 0,
+        "width": 48,
+        "height": 48,
+        "color": [
+          60,
+          39,
+          28
+        ],
+        "cssX": -72,
+        "cssY": 0
+      },
+      {
+        "glyph": "ر",
+        "x": 0,
+        "y": 48,
+        "width": 48,
+        "height": 48,
+        "color": [
+          117,
+          81,
+          58
+        ],
+        "cssX": 0,
+        "cssY": -24
+      },
+      {
+        "glyph": "س",
+        "x": 48,
+        "y": 48,
+        "width": 48,
+        "height": 48,
+        "color": [
+          126,
+          109,
+          84
+        ],
+        "cssX": -24,
+        "cssY": -24
+      },
+      {
+        "glyph": "ع",
+        "x": 96,
+        "y": 48,
+        "width": 48,
+        "height": 48,
+        "color": [
+          88,
+          67,
+          53
+        ],
+        "cssX": -48,
+        "cssY": -24
+      },
+      {
+        "glyph": "ق",
+        "x": 144,
+        "y": 48,
+        "width": 48,
+        "height": 48,
+        "color": [
+          81,
+          44,
+          29
+        ],
+        "cssX": -72,
+        "cssY": -24
+      },
+      {
+        "glyph": "ل",
+        "x": 0,
+        "y": 96,
+        "width": 48,
+        "height": 48,
+        "color": [
+          29,
+          18,
+          13
+        ],
+        "cssX": 0,
+        "cssY": -48
+      },
+      {
+        "glyph": "م",
+        "x": 48,
+        "y": 96,
+        "width": 48,
+        "height": 48,
+        "color": [
+          43,
+          31,
+          24
+        ],
+        "cssX": -24,
+        "cssY": -48
+      },
+      {
+        "glyph": "ن",
+        "x": 96,
+        "y": 96,
+        "width": 48,
+        "height": 48,
+        "color": [
+          234,
+          227,
+          218
+        ],
+        "cssX": -48,
+        "cssY": -48
+      },
+      {
+        "glyph": "ے",
+        "x": 144,
+        "y": 96,
+        "width": 48,
+        "height": 48,
+        "color": [
+          120,
+          93,
+          70
+        ],
+        "cssX": -72,
+        "cssY": -48
+      }
+    ]
+  }
+}

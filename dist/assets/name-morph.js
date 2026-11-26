@@ -1,5 +1,10 @@
 (() => {
   'use strict';
+  // Phones use prepared artwork: do not create native canvas contexts or
+  // rasterize thousands of complex glyphs during the initial page load.
+  if (window.PortfolioMotion?.lightweight ??
+      (matchMedia('(pointer: coarse)').matches || innerWidth < 768)) return;
+
   const names = ['محمد', 'ماحي', 'علي', 'مكاتي'];
   const headerMark = document.querySelector('[data-name-mark]');
   const canvas = document.querySelector('#name-art') || headerMark;

@@ -14,17 +14,17 @@
   <meta property="og:image" content="https://mahimukati.github.io/assets/moraine-lake-preview.jpg">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/newsreader.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="preload" href="assets/fonts/noto-nastaliq-urdu.ttf" as="font" type="font/ttf" crossorigin>
   <script src="assets/theme.js?v=12"></script>
-  <script src="assets/motion-budget.js?v=1" defer></script>
-  <link rel="stylesheet" href="assets/lake.css?v=15">
-  <link rel="stylesheet" href="assets/home-journey.css?v=12">
+  <script src="assets/motion-budget.js?v=2"></script>
+  <script src="assets/mobile-artwork.js?v=4" defer></script>
+  <link rel="stylesheet" href="assets/lake.css?v=16">
+  <link rel="stylesheet" href="assets/home-journey.css?v=14">
   <link rel="stylesheet" href="assets/photo-stack.css?v=4">
-  <script src="assets/photo-stack.js?v=2" defer></script>
-  <script src="assets/portrait-letters.js?v=6" defer></script>
-  <script src="assets/scroll-letters.js?v=10" defer></script>
-  <script src="assets/lake-curtain.js?v=16" defer></script>
-  <script src="assets/name-morph.js?v=13" defer></script>
+  <script src="assets/photo-stack.js?v=3" defer></script>
+  <script src="assets/portrait-letters.js?v=7" defer></script>
+  <script src="assets/scroll-letters.js?v=12" defer></script>
+  <script src="assets/lake-curtain.js?v=18" defer></script>
+  <script src="assets/name-morph.js?v=14" defer></script>
   <link rel="stylesheet" href="assets/typography.css?v=1">
 </head>
 <body class="lake-home">
@@ -32,6 +32,7 @@
   <header class="lake-header">
     <a class="lake-wordmark" href="./" aria-label="mahi mukati — home" >
       <canvas data-name-mark aria-hidden="true"></canvas>
+      <img class="mobile-name" width="104" height="60" alt="" hidden>
       <span class="name-mark-fallback" lang="ar" dir="rtl">ماحي</span>
     </a>
     <nav aria-label="primary"><a href="./" aria-current="page">home</a><a href="projects/">projects</a><a href="writing/">writing</a><button class="theme-toggle" type="button" data-theme-toggle aria-label="switch to dark mode" title="switch to dark mode" hidden><svg class="theme-icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 13.1A8.5 8.5 0 0 1 10.9 3.2 8.5 8.5 0 1 0 20.8 13.1Z"/></svg><svg class="theme-icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></nav>
@@ -42,7 +43,10 @@
       <section class="home-greeting" aria-label="introduction">
         <h1>salaam, my name is mahi.<br>i’m 19, and i live in toronto.</h1>
         <figure class="home-portrait" data-letter-portrait data-cutout="assets/Gallery/portrait-alpha-mask.webp">
+          <picture>
+            <source media="(pointer: coarse), (max-width: 767px)" srcset="assets/mobile/portrait.webp">
           <img src="assets/Gallery/portrait.webp" srcset="assets/Gallery/portrait-small.webp 600w, assets/Gallery/portrait.webp 1200w" sizes="(max-width: 600px) 260px, 320px" width="1200" height="1493" alt="mahi standing outdoors in toronto" fetchpriority="high">
+          </picture>
           <canvas aria-hidden="true"></canvas>
         </figure>
       </section>
@@ -105,7 +109,11 @@
       </section>
     </div>
     <div class="lake-scene">
+      <picture>
+        <source media="(pointer: coarse) and (min-width: 600px)" srcset="assets/mobile/lake-urdu-wide.webp">
+        <source media="(pointer: coarse), (max-width: 767px)" srcset="assets/mobile/lake-urdu.webp">
       <img class="lake-fallback" loading="lazy" decoding="async" src="assets/moraine-lake.avif" width="640" height="639" alt="moraine lake's turquoise water beneath the snow-covered valley of the ten peaks in banff" fetchpriority="low">
+      </picture>
       <canvas id="lake-curtain" data-image="assets/moraine-lake.avif" role="img" tabindex="-1" aria-hidden="true" aria-label="moraine lake, formed from thousands of urdu letters" aria-describedby="curtain-help"></canvas>
     <nav class="lake-socials" aria-label="social links">
       <a href="https://github.com/MahiMukati" aria-label="github"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.86c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.03a9.57 9.57 0 0 1 5 0c1.91-1.3 2.75-1.03 2.75-1.03.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg></a>
