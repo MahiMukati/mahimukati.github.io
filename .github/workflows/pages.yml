@@ -10,6 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -21,6 +22,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      PAGES_ARTIFACT: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -35,6 +38,37 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: out
+          name: ${{ env.PAGES_ARTIFACT }}
+      - name: Wait for uploaded site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module <<'JS'
+          const endpoint = `${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}/artifacts?per_page=100`;
+          for (let attempt = 0; attempt < 12; attempt++) {
+            const response = await fetch(endpoint, {
+              headers: {
+                Authorization: `Bearer ${process.env.GH_TOKEN}`,
+                Accept: 'application/vnd.github+json',
+                'Cache-Control': 'no-cache',
+              },
+              signal: AbortSignal.timeout(10000),
+            });
+            if (!response.ok) throw new Error(`Artifact lookup failed: HTTP ${response.status}`);
+            const data = await response.json();
+            const matches = data.artifacts.filter(artifact => artifact.name === process.env.PAGES_ARTIFACT && !artifact.expired);
+            if (matches.length === 1) {
+              console.log('Uploaded site is ready for GitHub Pages.');
+              process.exit(0);
+            }
+            if (matches.length > 1) throw new Error('Duplicate Pages artifact for this attempt.');
+            console.log('Waiting for GitHub to make the uploaded site available...');
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+          throw new Error('Uploaded site did not become available within 60 seconds.');
+          JS
       - name: Publish
         id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          artifact_name: ${{ env.PAGES_ARTIFACT }}
