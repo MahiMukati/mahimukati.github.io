@@ -5,29 +5,38 @@
   const main = canvas?.closest('main.home-journey');
   const story = main?.querySelector('.home-story');
   const scene = main?.querySelector('.lake-scene');
-  const photograph = scene?.querySelector('.lake-fallback');
-  const context = canvas?.getContext('2d', { alpha: true });
-  if (!canvas || !main || !story || !scene || !photograph || !context) return;
+  if (!canvas || !main || !story || !scene) return;
+  const paletteURL = new URL('lake-palette.json', document.currentScript.src);
+  const context = canvas.getContext('2d', { alpha: true });
+  if (!context) return;
 
+  const runtime = window.PortfolioMotion;
+  const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+  const coarsePointer = matchMedia('(pointer: coarse)');
+  const reduced = () => runtime ? runtime.reduced : motionPreference.matches;
+  const mobile = () => runtime ? runtime.mobile : coarsePointer.matches || innerWidth < 768;
+  const low = () => Boolean(runtime?.low);
+  const debug = Boolean(runtime?.debug);
   const letters = [...'ابتٹثجچحخدڈرڑزژسشصضطظعغفقکگلمنںوہھیے'];
-  const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const atlas = document.createElement('canvas');
   const atlasContext = atlas.getContext('2d');
   if (!atlasContext) return;
-  const atlasColumns = 8, glyphRows = Math.ceil(letters.length / atlasColumns);
-  const tile = 26, fontSize = 13, atlasScale = 2;
-  const flickerFraction = 0.01;
-  let palette = [], paletteRGB = [], points = [], copyBounds = [], sourcePhoto;
-  let width = 0, height = 0, sceneTop = 0, sceneHeight = 0, mainTop = 0, mainLeft = 0, fieldEnd = 0;
-  let frame = 0, layoutDirty = true, clearAll = true, ready = false;
-  let elapsed = 0, lastTime = 0, lastDraw = 0, frames = 0;
+  const atlasColumns = 32, tile = 26, fontSize = 13;
+  const bandHeight = 192, overscan = 48, flowSpeed = 12, boundsBandHeight = 256;
+  let atlasScale = 0, palette = [], paletteRGB = [], sourceColorMap, sourceRatio = 1;
+  let points = [], bandKeys = [], bandSlots = 0, bandCapacity = 0;
+  let copyBands = new Map();
+  let width = 0, pageHeight = 0, viewportHeight = 0, surfaceHeight = 0, dpr = 1;
+  let sceneTop = 0, sceneHeight = 0, mainTop = 0, mainLeft = 0, fieldEnd = 0, spriteSize = 0;
+  let frame = 0, resizeTimer = 0, layoutDirty = true, viewportDirty = true, profileDirty = true;
+  let ready = false, failed = false, elapsed = 0, lastTime = 0, lastDraw = 0, lastMetricUpdate = 0;
+  let frames = 0, needsDraw = true, settlingUntil = 0;
   const pointer = { active: false, x: 0, y: 0, time: 0 };
   const wake = [];
-  let settlingUntil = 0;
 
-  const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
-  const smoothstep = (low, high, value) => {
-    const t = clamp((value - low) / (high - low), 0, 1);
+  const clamp = (value, lowValue, highValue) => Math.max(lowValue, Math.min(highValue, value));
+  const smoothstep = (lowValue, highValue, value) => {
+    const t = clamp((value - lowValue) / (highValue - lowValue), 0, 1);
     return t * t * (3 - 2 * t);
   };
   const randomAt = (index, salt) => {
@@ -37,45 +46,40 @@
   };
 
   async function samplePalette() {
-    const photo = new Image();
-    photo.src = photograph.currentSrc || photograph.src;
-    if (photo.decode) await photo.decode();
-    else await new Promise((resolve, reject) => { photo.onload = resolve; photo.onerror = reject; });
-    sourcePhoto = photo;
-    const sample = document.createElement('canvas');
-    sample.width = sample.height = 96;
-    const sampleContext = sample.getContext('2d', { willReadFrequently: true });
-    if (!sampleContext) throw new Error('Photo sampling is unavailable.');
-    sampleContext.drawImage(photo, 0, 0, 96, 96);
-    const pixels = sampleContext.getImageData(0, 0, 96, 96).data;
-    const bins = new Map();
-    for (let p = 0; p < pixels.length; p += 4) {
-      const key = `${Math.floor(pixels[p] / 24)},${Math.floor(pixels[p + 1] / 24)},${Math.floor(pixels[p + 2] / 24)}`;
-      const bin = bins.get(key) || { count: 0, r: 0, g: 0, b: 0 };
-      bin.count++; bin.r += pixels[p]; bin.g += pixels[p + 1]; bin.b += pixels[p + 2];
-      bins.set(key, bin);
+    const response = await fetch(paletteURL);
+    if (!response.ok) throw new Error('The lake palette is unavailable.');
+    const asset = await response.json();
+    if (asset.version !== 1 || asset.width !== 96 || asset.height !== 96
+      || !Array.isArray(asset.palette) || !asset.palette.length || asset.palette.length > 16
+      || !Array.isArray(asset.indices) || asset.indices.length !== 96 * 96
+      || !Number.isFinite(asset.sourceRatio) || asset.sourceRatio <= 0
+      || asset.palette.some(rgb => !Array.isArray(rgb) || rgb.length !== 3 || rgb.some(value => !Number.isFinite(value) || value < 0 || value > 255))
+      || asset.indices.some(index => !Number.isInteger(index) || index < 0 || index >= asset.palette.length)) {
+      throw new Error('The lake palette is invalid.');
     }
-    const colors = [...bins.values()].filter(bin => bin.count > 2).map(bin => ({
-      count: bin.count,
-      rgb: [Math.round(bin.r / bin.count), Math.round(bin.g / bin.count), Math.round(bin.b / bin.count)],
-    })).sort((a, b) => b.count - a.count);
-    const luminance = color => color.rgb[0] * 0.2126 + color.rgb[1] * 0.7152 + color.rgb[2] * 0.0722;
-    const byLight = [...colors].sort((a, b) => luminance(a) - luminance(b));
-    // Include snow and forest shadows, then the most common distinct lake,
-    // mountain, and tree colors. Every RGB value comes from the photograph.
-    const selected = [byLight[0], byLight[byLight.length - 1]];
-    for (const color of colors) {
-      if (selected.length >= 16) break;
-      if (selected.every(other => Math.hypot(...color.rgb.map((value, axis) => value - other.rgb[axis])) > 32)) selected.push(color);
-    }
-    paletteRGB = selected.map(color => color.rgb);
+    sourceRatio = asset.sourceRatio;
+    paletteRGB = asset.palette;
     palette = paletteRGB.map(rgb => `rgb(${rgb.join(',')})`);
-    canvas.dataset.palette = String(palette.length);
+    // Generated from the lake photograph: no full image decode or readback at startup.
+    sourceColorMap = Uint8Array.from(asset.indices);
+  }
+
+  function colorAt(x, y) {
+    const ratio = width / sceneHeight;
+    const cropWidth = sourceRatio > ratio ? ratio / sourceRatio : 1;
+    const cropHeight = sourceRatio > ratio ? 1 : sourceRatio / ratio;
+    const u = (1 - cropWidth) * 0.46 + clamp(x / width, 0, 1) * cropWidth;
+    const v = (1 - cropHeight) * 0.44 + clamp((y - sceneTop) / sceneHeight, 0, 1) * cropHeight;
+    return sourceColorMap[clamp(Math.floor(v * 96), 0, 95) * 96 + clamp(Math.floor(u * 96), 0, 95)];
   }
 
   function buildAtlas() {
+    const nextScale = mobile() ? 1 : 2;
+    if (atlasScale === nextScale) return;
+    atlasScale = nextScale;
+    const count = letters.length * palette.length * 2;
     atlas.width = atlasColumns * tile * atlasScale;
-    atlas.height = glyphRows * palette.length * 2 * tile * atlasScale;
+    atlas.height = Math.ceil(count / atlasColumns) * tile * atlasScale;
     atlasContext.setTransform(atlasScale, 0, 0, atlasScale, 0, 0);
     atlasContext.font = `${fontSize}px "Noto Nastaliq Urdu", serif`;
     atlasContext.textAlign = 'center';
@@ -85,111 +89,102 @@
       atlasContext.fillStyle = color < palette.length ? palette[baseColor]
         : `rgb(${paletteRGB[baseColor].map(value => Math.round(value + (255 - value) * 0.65)).join(',')})`;
       for (let glyph = 0; glyph < letters.length; glyph++) {
+        const index = color * letters.length + glyph;
         const metrics = atlasContext.measureText(letters[glyph]);
         const baseline = ((metrics.actualBoundingBoxAscent || fontSize) - (metrics.actualBoundingBoxDescent || 0)) / 2;
-        atlasContext.fillText(letters[glyph], (glyph % atlasColumns + 0.5) * tile,
-          (color * glyphRows + Math.floor(glyph / atlasColumns) + 0.5) * tile + baseline);
+        atlasContext.fillText(letters[glyph], (index % atlasColumns + 0.5) * tile,
+          (Math.floor(index / atlasColumns) + 0.5) * tile + baseline);
       }
     }
   }
 
-  function sourceColors() {
-    // Use the artwork's crop so letters lift out in the color beneath them.
-    const sample = document.createElement('canvas');
-    sample.width = 120; sample.height = Math.max(1, Math.round(120 * sceneHeight / width));
-    const sampleContext = sample.getContext('2d', { willReadFrequently: true });
-    if (!sampleContext) return () => 0;
-    let sw = sourcePhoto.naturalWidth, sh = sourcePhoto.naturalHeight;
-    if (sw / sh > width / sceneHeight) sw = sh * width / sceneHeight;
-    else sh = sw * sceneHeight / width;
-    sampleContext.drawImage(sourcePhoto, (sourcePhoto.naturalWidth - sw) * 0.46,
-      (sourcePhoto.naturalHeight - sh) * 0.44, sw, sh, 0, 0, sample.width, sample.height);
-    const pixels = sampleContext.getImageData(0, 0, sample.width, sample.height).data;
-    return (x, y) => {
-      const px = clamp(Math.floor(x / width * sample.width), 0, sample.width - 1);
-      const py = clamp(Math.floor((y - sceneTop) / sceneHeight * sample.height), 0, sample.height - 1);
-      const p = (py * sample.width + px) * 4;
-      let closest = 0, distance = Infinity;
-      paletteRGB.forEach((rgb, index) => {
-        const difference = rgb.reduce((sum, value, axis) => sum + (value - pixels[p + axis]) ** 2, 0);
-        if (difference < distance) { closest = index; distance = difference; }
-      });
-      return closest;
-    };
+  function fitViewport() {
+    viewportHeight = Math.max(1, Math.ceil(innerHeight));
+    // Quantizing the spare strip avoids reallocating on every mobile toolbar pixel.
+    const nextHeight = Math.ceil(viewportHeight / 64) * 64;
+    const nextDpr = Math.min(devicePixelRatio || 1, mobile() ? 1 : 1.5, 4096 / width, 4096 / nextHeight);
+    const pixelWidth = Math.ceil(width * nextDpr), pixelHeight = Math.ceil(nextHeight * nextDpr);
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth; canvas.height = pixelHeight;
+      context.setTransform(nextDpr, 0, 0, nextDpr, 0, 0);
+    }
+    if (surfaceHeight !== nextHeight) canvas.style.height = `${nextHeight}px`;
+    surfaceHeight = nextHeight; dpr = nextDpr;
+    const capacity = Math.ceil((surfaceHeight + overscan * 2) / bandHeight) + 2;
+    const budget = mobile() ? low() ? 600 : 1200 : 5000;
+    const slots = Math.max(1, Math.floor(budget / capacity));
+    if (bandCapacity !== capacity || bandSlots !== slots || profileDirty) {
+      bandCapacity = capacity; bandSlots = slots;
+      const count = capacity * slots;
+      if (points.length !== count) points = Array.from({ length: count }, () => ({}));
+      bandKeys = new Array(capacity).fill(null);
+    }
+    viewportDirty = false;
   }
 
   function measure() {
     const box = main.getBoundingClientRect(), sceneBox = scene.getBoundingClientRect();
-    width = Math.max(1, Math.round(box.width));
-    height = Math.max(1, Math.ceil(main.scrollHeight));
-    mainTop = box.top + window.scrollY;
-    mainLeft = box.left;
-    sceneTop = Math.max(1, sceneBox.top - box.top);
-    sceneHeight = Math.max(1, sceneBox.height);
-    fieldEnd = Math.min(height, sceneTop + sceneHeight * 0.42);
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    canvas.width = Math.ceil(width * dpr); canvas.height = Math.ceil(height * dpr);
-    context.setTransform(dpr, 0, 0, dpr, 0, 0);
-    copyBounds = [];
+    const nextWidth = Math.max(1, Math.round(box.width));
+    const nextSceneTop = Math.max(1, sceneBox.top - box.top);
+    const nextSceneHeight = Math.max(1, sceneBox.height);
+    const geometryChanged = width !== nextWidth || sceneTop !== nextSceneTop || sceneHeight !== nextSceneHeight;
+    width = nextWidth; pageHeight = Math.max(1, Math.ceil(main.scrollHeight));
+    mainTop = box.top + scrollY; mainLeft = box.left;
+    sceneTop = nextSceneTop; sceneHeight = nextSceneHeight;
+    fieldEnd = Math.min(pageHeight, sceneTop + sceneHeight * 0.42);
+    canvas.style.left = `${mainLeft}px`;
+    canvas.style.width = `${width}px`;
+    copyBands.clear();
     for (const panel of story.querySelectorAll('.home-greeting, .home-current')) {
       const blocks = panel.querySelectorAll('h1, h2, h3, p, li, .photo-stack-caption');
       for (const block of blocks.length ? blocks : [panel]) {
         if (!block.textContent.trim()) continue;
         const range = document.createRange(); range.selectNodeContents(block);
-        // Reserve the caption row so changing slides keeps every caption clear.
-        const text = block.matches('.photo-stack-caption')
-          ? block.getBoundingClientRect() : range.getBoundingClientRect();
-        if (text.width && text.height) copyBounds.push({
-          left: text.left - box.left - 24, right: text.right - box.left + 24,
-          top: text.top - box.top - 20, bottom: text.bottom - box.top + 20,
-        });
+        const text = block.matches('.photo-stack-caption') ? block.getBoundingClientRect() : range.getBoundingClientRect();
+        if (!text.width || !text.height) continue;
+        const bounds = { left: text.left - box.left - 24, right: text.right - box.left + 24,
+          top: text.top - box.top - 20, bottom: text.bottom - box.top + 20 };
+        for (let band = Math.floor((bounds.top - 60) / boundsBandHeight); band <= Math.floor((bounds.bottom + 60) / boundsBandHeight); band++) {
+          if (!copyBands.has(band)) copyBands.set(band, []);
+          copyBands.get(band).push(bounds);
+        }
       }
     }
-    const mobile = sceneBox.width < 640;
-    const columns = Math.max(64, Math.round(Math.sqrt((mobile ? 13000 : 40000) * sceneBox.width / sceneHeight)));
-    const spriteSize = tile * (sceneBox.width / columns) / 7.1 * (mobile ? 1.04 : 1.08);
-    // Keep the traveling population proportional to page area. A fixed cap
-    // diluted the upper page as new sections lengthened each letter's journey.
-    // Offscreen points still skip drawing and mouse simulation in draw().
-    const count = Math.round(1.4 * Math.max(width * fieldEnd / (mobile ? 400 : 700), mobile ? 900 : 1400));
-    const liftCount = Math.round(1.4 * clamp(width * sceneHeight / (mobile ? 135 : 115), mobile ? 1600 : 2800, mobile ? 2600 : 6200));
-    const colorAt = sourceColors();
-    points = [];
-    for (let index = 0; index < count + liftCount; index++) {
-      const lifting = index >= count;
-      const x = (0.015 + randomAt(index, 3) * 0.97) * width;
-      const startY = sceneTop + sceneHeight * (lifting ? 0.12 + randomAt(index, 1) * 0.24 : 0.015 + randomAt(index, 1) * 0.3);
-      // Give a stable minority a full-page journey, fading above the opening
-      // instead of moving their fade-out farther down when the page grows.
-      // The rest still disappear at varied heights, with a dense lift at the lake.
-      const reachesTop = !lifting && randomAt(index, 15) < 0.32;
-      const endY = (lifting ? sceneTop - 35 - Math.pow(randomAt(index, 2), 1.6) * Math.min(440, sceneTop * 0.48)
-        : reachesTop ? -80 - randomAt(index, 16) * 200
-          : sceneTop * (0.025 + 0.86 * Math.pow(randomAt(index, 2), 0.48)))
+    const targetCount = mobile() ? low() ? 4000 : 8000 : 40000;
+    const columns = Math.max(64, Math.round(Math.sqrt(targetCount * width / sceneHeight)));
+    spriteSize = tile * (width / columns) / 7.1 * (mobile() ? 1.04 : 1.08);
+    if (geometryChanged) { bandKeys.fill(null); resetPointer(); }
+    layoutDirty = false;
+    viewportDirty = true;
+  }
+
+  function populateBand(band, slot) {
+    const offset = slot * bandSlots;
+    for (let index = 0; index < bandSlots; index++) {
+      const seed = Math.imul(band, 8191) + index;
+      const point = points[offset + index];
+      const lifting = randomAt(seed, 20) > 0.56;
+      const x = (0.015 + randomAt(seed, 3) * 0.97) * width;
+      const startY = sceneTop + sceneHeight * (lifting ? 0.12 + randomAt(seed, 1) * 0.24 : 0.015 + randomAt(seed, 1) * 0.3);
+      const reachesTop = !lifting && randomAt(seed, 15) < 0.32;
+      const endY = (lifting ? sceneTop - 35 - Math.pow(randomAt(seed, 2), 1.6) * Math.min(440, sceneTop * 0.48)
+        : reachesTop ? -80 - randomAt(seed, 16) * 200
+          : sceneTop * (0.025 + 0.86 * Math.pow(randomAt(seed, 2), 0.48)))
         - (reachesTop ? 0 : Math.min(100, sceneTop * 0.1));
-      points.push({
-        x, lifting,
-        startY, endY, distance: startY - endY,
-        speed: 8 + randomAt(index, 4) * 8,
-        age: randomAt(index, 5),
-        phase: randomAt(index, 6) * Math.PI * 2,
-        sway: 2 + randomAt(index, 7) * 5,
-        glyph: Math.floor(randomAt(index, 8) * letters.length),
-        color: lifting ? colorAt(x, startY) : Math.floor(randomAt(index, 9) * palette.length),
-        size: spriteSize * (0.85 + randomAt(index, 10) * 0.3),
-        alpha: (lifting ? 0.46 : 0.35) + randomAt(index, 11) * 0.3,
-        flickers: randomAt(index, 14) < flickerFraction,
-        flickerPeriod: 0.85 + randomAt(index, 12) * 0.55,
-        flickerPhase: randomAt(index, 13),
-        ox: 0, oy: 0, vx: 0, vy: 0, traveled: 0,
+      Object.assign(point, {
+        x, lifting, startY, endY, distance: startY - endY,
+        y: (band + randomAt(seed, 5)) * bandHeight,
+        phase: randomAt(seed, 6) * Math.PI * 2, sway: 2 + randomAt(seed, 7) * 5,
+        glyph: Math.floor(randomAt(seed, 8) * letters.length),
+        color: lifting ? colorAt(x, startY) : Math.floor(randomAt(seed, 9) * palette.length),
+        size: spriteSize * (0.85 + randomAt(seed, 10) * 0.3),
+        alpha: (lifting ? 0.46 : 0.35) + randomAt(seed, 11) * 0.3,
+        flickers: randomAt(seed, 14) < 0.01,
+        flickerPeriod: 0.85 + randomAt(seed, 12) * 0.55,
+        flickerPhase: randomAt(seed, 13), ox: 0, oy: 0, vx: 0, vy: 0,
       });
     }
-    resetPointer();
-    canvas.dataset.count = String(points.length);
-    canvas.dataset.flickerPopulation = String(points.filter(point => point.flickers).length);
-    canvas.dataset.lifting = String(liftCount);
-    canvas.dataset.size = spriteSize.toFixed(2);
-    layoutDirty = false; clearAll = true;
+    bandKeys[slot] = band;
   }
 
   function resetPointer() {
@@ -197,13 +192,12 @@
   }
 
   function movePointer(event) {
-    if (!ready || motionPreference.matches || event.pointerType === 'touch') return;
-    const x = event.clientX - mainLeft, y = event.clientY + window.scrollY - mainTop;
+    if (!ready || reduced() || event.pointerType === 'touch') return;
+    const x = event.clientX - mainLeft, y = event.clientY + scrollY - mainTop;
     if (x < 0 || x > width || y < 0 || y > fieldEnd) { resetPointer(); return; }
     const now = performance.now();
     if (pointer.active) {
       const last = wake[wake.length - 1];
-      // Coalesce only within a frame, retaining the start of each swept segment.
       const segment = last && now - last.start < 16 ? last
         : { ax: pointer.x, ay: pointer.y, bx: x, by: y, start: pointer.time, time: now };
       segment.bx = x; segment.by = y; segment.time = now;
@@ -214,9 +208,8 @@
     settlingUntil = now + 1800;
     schedule();
   }
-
   function breeze(point, x, y, dt, now) {
-    if (motionPreference.matches) { point.ox = point.oy = point.vx = point.vy = 0; return; }
+    if (reduced()) { point.ox = point.oy = point.vx = point.vy = 0; return; }
     const radius = width < 640 ? 100 : 120;
     const nearby = pointer.active && Math.abs(x - pointer.x) < radius && Math.abs(y - pointer.y) < radius;
     if (!nearby && !wake.length && Math.abs(point.ox) + Math.abs(point.oy) + Math.abs(point.vx) + Math.abs(point.vy) < 0.02) {
@@ -255,122 +248,185 @@
     }
   }
 
+
   function draw(now) {
+    const started = performance.now();
     if (layoutDirty) measure();
-    const dt = lastDraw ? Math.min(0.05, (now - lastDraw) / 1000) : 1 / 60;
+    if (profileDirty) buildAtlas();
+    if (viewportDirty || profileDirty) fitViewport();
+    profileDirty = false;
+    const viewportTop = scrollY - mainTop;
+    const top = Math.max(-overscan, viewportTop - overscan);
+    const bottom = Math.min(fieldEnd + overscan, viewportTop + surfaceHeight + overscan);
+    const dt = lastDraw ? Math.min(0.05, (now - lastDraw) / 1000) : 1 / 30;
+    const drift = elapsed * flowSpeed;
     while (wake.length && now - wake[0].time > 650) wake.shift();
-    const viewportTop = window.scrollY - mainTop;
-    const top = clamp(viewportTop - 48, 0, height);
-    const bottom = clamp(viewportTop + window.innerHeight + 48, 0, height);
-    const progress = clamp(window.scrollY / Math.max(1, mainTop + sceneTop - window.innerHeight * 0.7), 0, 1);
-    if (clearAll) { context.clearRect(0, 0, width, height); clearAll = false; }
-    else context.clearRect(0, top, width, Math.max(0, bottom - top));
+    context.clearRect(0, 0, width, surfaceHeight);
     context.save();
-    context.beginPath(); context.rect(0, top, width, Math.max(0, bottom - top)); context.clip();
+    context.translate(0, -viewportTop);
+    const progress = clamp(scrollY / Math.max(1, mainTop + sceneTop - viewportHeight * 0.7), 0, 1);
+    const reveal = reduced() ? 1 : 0.78 + progress * 0.22;
     let visible = 0, flickering = 0, displacement = 0;
-    for (const point of points) {
-      const traveled = (point.age * point.distance + elapsed * point.speed) % point.distance;
-      const baseY = point.startY - traveled;
-      if (traveled < point.traveled) point.ox = point.oy = point.vx = point.vy = 0;
-      point.traveled = traveled;
-      if (baseY + point.size + 40 < top || baseY - point.size - 40 > bottom || baseY > fieldEnd) {
-        point.ox = point.oy = point.vx = point.vy = 0; continue;
+    const firstBand = Math.floor((top + drift) / bandHeight);
+    const lastBand = Math.floor((bottom + drift) / bandHeight);
+    // Only bands touching this viewport are generated or visited. The same seed
+    // describes the same letter after scrolling away and returning.
+    for (let band = firstBand; band <= lastBand; band++) {
+      const slot = ((band % bandCapacity) + bandCapacity) % bandCapacity;
+      if (bandKeys[slot] !== band) populateBand(band, slot);
+      const offset = slot * bandSlots;
+      for (let index = 0; index < bandSlots; index++) {
+        const point = points[offset + index];
+        const baseY = point.y - drift;
+        if (baseY < top - point.size || baseY > bottom + point.size || baseY > fieldEnd || baseY < point.endY || baseY > point.startY) {
+          point.ox = point.oy = point.vx = point.vy = 0;
+          continue;
+        }
+        const traveled = point.startY - baseY;
+        const baseX = point.x + Math.sin(elapsed * 0.18 + point.phase) * point.sway;
+        breeze(point, baseX, baseY, dt, now);
+        const x = baseX + point.ox, y = baseY + point.oy;
+        if (debug) displacement = Math.max(displacement, Math.hypot(point.ox, point.oy));
+        const fadeIn = smoothstep(0, Math.min(85, point.distance * 0.15), traveled);
+        const fadeOut = smoothstep(0, Math.min(150, point.distance * 0.22), baseY - point.endY);
+        const merge = 1 - smoothstep(sceneTop + sceneHeight * (point.lifting ? 0.13 : 0.035), fieldEnd, baseY);
+        let protection = 1;
+        const nearbyBounds = copyBands.get(Math.floor(y / boundsBandHeight));
+        if (nearbyBounds) for (const bounds of nearbyBounds) {
+          const dx = Math.max(bounds.left - x, 0, x - bounds.right);
+          const dy = Math.max(bounds.top - y, 0, y - bounds.bottom);
+          if (dx > 60 || dy > 60) continue;
+          protection = Math.min(protection, 0.025 + 0.975 * smoothstep(0, 60, Math.hypot(dx, dy)));
+        }
+        const alpha = point.alpha * fadeIn * fadeOut * merge * protection * reveal;
+        if (alpha < 0.008) continue;
+        let flicker = 0;
+        if (!reduced() && point.flickers) {
+          const t = (elapsed / point.flickerPeriod + point.flickerPhase) % 1;
+          const pulse = (start, end) => t > start && t < end ? Math.sin(Math.PI * (t - start) / (end - start)) ** 2 : 0;
+          flicker = -0.8 * pulse(0, 0.22) + pulse(0.16, 0.48) - 0.55 * pulse(0.43, 0.64) + 0.85 * pulse(0.59, 1);
+          flickering++;
+        }
+        const sprite = point.color * letters.length + point.glyph;
+        const spritePixels = tile * atlasScale;
+        context.globalAlpha = alpha * (1 + Math.min(0, flicker));
+        context.drawImage(atlas, sprite % atlasColumns * spritePixels, Math.floor(sprite / atlasColumns) * spritePixels,
+          spritePixels, spritePixels, x - point.size / 2, y - point.size / 2, point.size, point.size);
+        if (flicker > 0) {
+          const brightSprite = sprite + palette.length * letters.length;
+          context.globalAlpha = Math.min(1, alpha * flicker * 1.3);
+          context.drawImage(atlas, brightSprite % atlasColumns * spritePixels, Math.floor(brightSprite / atlasColumns) * spritePixels,
+            spritePixels, spritePixels, x - point.size / 2, y - point.size / 2, point.size, point.size);
+        }
+        visible++;
       }
-      const baseX = point.x + Math.sin(elapsed * 0.18 + point.phase) * point.sway;
-      breeze(point, baseX, baseY, dt, now);
-      const x = baseX + point.ox, y = baseY + point.oy;
-      displacement = Math.max(displacement, Math.hypot(point.ox, point.oy));
-      const fadeIn = smoothstep(0, Math.min(85, point.distance * 0.15), traveled);
-      const fadeOut = smoothstep(0, Math.min(150, point.distance * 0.22), baseY - point.endY);
-      const merge = 1 - smoothstep(sceneTop + sceneHeight * (point.lifting ? 0.13 : 0.035), fieldEnd, baseY);
-      let protection = 1;
-      // Evaluate protection at each moving position, not at its spawn point.
-      for (const bounds of copyBounds) {
-        const dx = Math.max(bounds.left - x, 0, x - bounds.right);
-        const dy = Math.max(bounds.top - y, 0, y - bounds.bottom);
-        protection = Math.min(protection, 0.025 + 0.975 * smoothstep(0, 60, Math.hypot(dx, dy)));
-      }
-      const reveal = motionPreference.matches ? 1 : 0.78 + progress * 0.22;
-      const alpha = point.alpha * fadeIn * fadeOut * merge * protection * reveal;
-      if (alpha < 0.008) continue;
-      // A fixed 1% subset keeps flickering for its entire journey. Its normal
-      // fade envelope still controls both the base glyph and the light pulse.
-      let flicker = 0;
-      if (!motionPreference.matches && point.flickers) {
-        const t = (elapsed / point.flickerPeriod + point.flickerPhase) % 1;
-        const pulse = (start, end) => t > start && t < end
-          ? Math.sin(Math.PI * (t - start) / (end - start)) ** 2 : 0;
-        flicker = -0.8 * pulse(0, 0.22) + pulse(0.16, 0.48)
-          - 0.55 * pulse(0.43, 0.64) + 0.85 * pulse(0.59, 1);
-        flickering++;
-      }
-      context.globalAlpha = alpha * (1 + Math.min(0, flicker));
-      context.drawImage(atlas,
-        point.glyph % atlasColumns * tile * atlasScale,
-        (point.color * glyphRows + Math.floor(point.glyph / atlasColumns)) * tile * atlasScale,
-        tile * atlasScale, tile * atlasScale,
-        x - point.size / 2, y - point.size / 2, point.size, point.size);
-      if (flicker > 0) {
-        context.globalAlpha = Math.min(1, alpha * flicker * 1.3);
-        context.drawImage(atlas,
-          point.glyph % atlasColumns * tile * atlasScale,
-          ((point.color + palette.length) * glyphRows + Math.floor(point.glyph / atlasColumns)) * tile * atlasScale,
-          tile * atlasScale, tile * atlasScale,
-          x - point.size / 2, y - point.size / 2, point.size, point.size);
-      }
-      visible++;
     }
     context.restore();
-    canvas.dataset.flow = motionPreference.matches ? 'static' : 'upward';
-    canvas.dataset.progress = motionPreference.matches ? 'static' : progress.toFixed(3);
-    canvas.dataset.visible = String(visible);
-    canvas.dataset.flickering = String(flickering);
-    canvas.dataset.frame = String(++frames);
-    canvas.dataset.breeze = motionPreference.matches ? 'static' : pointer.active || wake.length ? 'active' : displacement > 0.05 ? 'settling' : 'idle';
-    canvas.dataset.displacement = displacement.toFixed(2);
     lastDraw = now;
+    needsDraw = false;
+    frames++;
+    if (debug && now - lastMetricUpdate >= 1000) {
+      Object.assign(canvas.dataset, {
+        count: String(points.length), visible: String(visible), flickering: String(flickering),
+        frame: String(frames), atlas: `${atlas.width}×${atlas.height}`, dpr: String(dpr),
+        backing: `${canvas.width}×${canvas.height}`, displacement: displacement.toFixed(2),
+        breeze: pointer.active || wake.length ? 'active' : displacement > 0.05 ? 'settling' : 'idle',
+      });
+      lastMetricUpdate = now;
+    }
+    runtime?.report('floating-letters', performance.now() - started);
+  }
+
+  function inView() {
+    const top = scrollY - mainTop;
+    return top < fieldEnd + overscan && top + innerHeight > 0;
+  }
+
+  function fail() {
+    failed = true; ready = false;
+    cancelAnimationFrame(frame); frame = 0;
+    clearTimeout(resizeTimer);
+    canvas.width = canvas.height = atlas.width = atlas.height = 0;
+    points = []; bandKeys = []; copyBands.clear(); sourceColorMap = null;
+    canvas.dataset.flow = 'unavailable';
   }
 
   function tick(now) {
     frame = 0;
     if (!ready || document.hidden) return;
-    if (!motionPreference.matches && lastTime) elapsed += Math.min(0.12, (now - lastTime) / 1000);
+    if (!reduced() && lastTime) elapsed += Math.min(0.12, (now - lastTime) / 1000);
     lastTime = now;
-    const rate = pointer.active || now < settlingUntil ? 60 : 30;
-    if (layoutDirty || clearAll || !lastDraw || now - lastDraw >= 1000 / rate - 1) draw(now);
-    if (!motionPreference.matches) frame = requestAnimationFrame(tick);
+    const rate = mobile() ? low() ? 20 : 30 : pointer.active || now < settlingUntil ? 60 : 30;
+    try {
+      if (layoutDirty || viewportDirty || profileDirty || !lastDraw || now - lastDraw >= 1000 / rate - 1) draw(now);
+    } catch (error) {
+      fail();
+      if (debug) console.warn('Floating letters disabled after a rendering failure.', error);
+      return;
+    }
+    if (needsDraw || (!reduced() && inView())) frame = requestAnimationFrame(tick);
+    else lastTime = 0;
   }
+
   function schedule(measureAgain = false) {
     layoutDirty = layoutDirty || measureAgain;
-    // Static mode must still repaint the newly visible strip after scrolling.
-    if (motionPreference.matches) clearAll = true;
+    needsDraw = true;
     if (!frame && ready && !document.hidden) frame = requestAnimationFrame(tick);
   }
+
+  function scheduleResize() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      viewportDirty = true;
+      schedule(true);
+    }, 140);
+  }
+
+  function profileChanged() {
+    profileDirty = true;
+    canvas.dataset.flow = reduced() ? 'static' : 'upward';
+    resetPointer(); lastTime = 0;
+    schedule(true);
+  }
+
   window.addEventListener('pointermove', movePointer, { passive: true });
   document.addEventListener('pointerleave', resetPointer, { passive: true });
   window.addEventListener('pointercancel', resetPointer, { passive: true });
   window.addEventListener('blur', resetPointer);
   window.addEventListener('scroll', () => { resetPointer(); schedule(); }, { passive: true });
-  window.addEventListener('resize', () => schedule(true), { passive: true });
+  window.addEventListener('resize', scheduleResize, { passive: true });
   window.addEventListener('pageshow', () => { lastTime = 0; schedule(true); });
-  window.addEventListener('portfolio:themechange', () => { clearAll = true; schedule(); });
+  window.addEventListener('pagehide', () => { cancelAnimationFrame(frame); frame = 0; lastTime = 0; resetPointer(); });
+  window.addEventListener('portfolio:themechange', () => schedule());
   document.addEventListener('visibilitychange', () => {
-    if (frame) cancelAnimationFrame(frame);
-    frame = 0; lastTime = 0; lastDraw = 0; resetPointer();
+    cancelAnimationFrame(frame); frame = 0; lastTime = 0; lastDraw = 0; resetPointer();
     if (!document.hidden) schedule(true);
   });
-  const preferenceChanged = () => {
-    if (frame) cancelAnimationFrame(frame);
-    frame = 0; lastTime = 0; clearAll = true; resetPointer(); schedule();
-  };
-  if (motionPreference.addEventListener) motionPreference.addEventListener('change', preferenceChanged);
-  else motionPreference.addListener(preferenceChanged);
+  canvas.addEventListener('contextlost', fail);
+  if (runtime) runtime.subscribe(profileChanged);
+  else {
+    motionPreference.addEventListener('change', profileChanged);
+    coarsePointer.addEventListener('change', profileChanged);
+  }
   if ('ResizeObserver' in window) {
-    const observer = new ResizeObserver(() => schedule(true));
+    const observer = new ResizeObserver(scheduleResize);
     observer.observe(main); observer.observe(story); observer.observe(scene);
   }
-  const font = document.fonts?.load('13px "Noto Nastaliq Urdu"', 'بہک') || Promise.resolve();
-  Promise.all([font.catch(() => {}), samplePalette()]).then(() => {
-    buildAtlas(); ready = true; schedule(true);
-  }).catch(() => { canvas.dataset.flow = 'unavailable'; });
+
+  async function initialize() {
+    if (failed) return;
+    try {
+      const font = document.fonts?.load('13px "Noto Nastaliq Urdu"', 'بہک') || Promise.resolve();
+      await Promise.all([font.catch(() => {}), samplePalette()]);
+      buildAtlas(); ready = true;
+      canvas.dataset.flow = reduced() ? 'static' : 'upward';
+      canvas.dataset.renderer = 'viewport-2d';
+      schedule(true);
+    } catch (error) {
+      fail();
+      if (debug) console.warn('Floating letters are unavailable.', error);
+    }
+  }
+  if (runtime) runtime.enqueue(initialize);
+  else requestAnimationFrame(() => setTimeout(initialize, 0));
 })();

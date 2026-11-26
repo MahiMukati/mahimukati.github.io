@@ -4,9 +4,12 @@
   const canvas = document.querySelector('#lake-curtain');
   const scene = canvas?.closest('.lake-scene');
   if (!canvas || !scene) return;
-  const gl = canvas.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: 'high-performance' });
-  const staticContext = gl ? null : canvas.getContext('2d', { alpha: false });
-  if (!gl && !staticContext) return;
+  const budget = window.PortfolioMotion;
+  const isMobile = () => budget?.mobile ?? (matchMedia('(pointer: coarse)').matches || innerWidth < 768);
+  let gl = null;
+  let initQueued = false, failed = false, restoredOnce = false, nearViewport = false;
+  let qualityKey = '';
+  // Contexts and image buffers are created only when the lake is approached.
   const pauseButton = document.querySelector('[data-curtain-pause]');
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const letters = [...'ابتٹثجچحخدڈرڑزژسشصضطظعغفقکگلمنںوہھیے'];
@@ -20,15 +23,15 @@
   const atlasScale = 2;
   const glyphSize = 13;
   const atlas = document.createElement('canvas');
-  const atlasContext = atlas.getContext('2d');
+  let atlasContext;
   const sampleCanvas = document.createElement('canvas');
-  const sampleContext = sampleCanvas.getContext('2d', { willReadFrequently: true });
+  let sampleContext;
   const photo = new Image();
   const pointer = { x: -1000, y: -1000, active: false, down: false, startX: 0, startY: 0, previousX: 0, previousY: 0, vx: 0, vy: 0, travel: 0 };
   const ripples = [];
   let width = 0, height = 0, dpr = 1, rows = 0, columns = 0, cellWidth = 0;
   let particles;
-  let loaded = false, assetsReady = false, inView = true, contextLost = false, hasDisplacement = false, offsetsDirty = true;
+  let loaded = false, assetsReady = false, inView = false, contextLost = false, hasDisplacement = false, offsetsDirty = true;
   let motionOverride = null;
   let animationFrame = 0, lastFrame = 0, lastRender = 0, elapsed = 0, resizeFrame = 0;
   let interactionCount = 0, lastInteraction = 0;
@@ -51,9 +54,10 @@
   const canInteract = () => loaded && gl && !contextLost && width > 0 && height > 0;
   const canAnimate = () => canInteract() && !userPaused() && inView && !document.hidden;
 
-  canvas.dataset.state = 'loading';
+  canvas.width = canvas.height = 1;
+  canvas.dataset.state = 'deferred';
   canvas.dataset.interactions = '0';
-  canvas.dataset.renderer = gl ? 'webgl' : 'static-2d';
+  canvas.dataset.renderer = 'pending';
   canvas.style.touchAction = 'pan-y';
   canvas.setAttribute('aria-keyshortcuts', 'ArrowUp ArrowDown ArrowLeft ArrowRight Space');
 
@@ -228,9 +232,9 @@
   }
 
   function buildParticles() {
-    const targetCount = gl ? (width < 640 ? 13000 : 40000) : 8800;
-    columns = Math.max(64, Math.round(Math.sqrt(targetCount * width / height)));
-    rows = Math.round(columns * height / width);
+    const targetCount = isMobile() ? (budget?.low ? 4000 : 8000) : 40000;
+    columns = Math.max(1, Math.floor(Math.sqrt(targetCount * width / height)));
+    rows = Math.max(1, Math.min(Math.round(columns * height / width), Math.floor(targetCount / columns)));
     cellWidth = width / columns;
     sampleCanvas.width = columns;
     sampleCanvas.height = rows;
@@ -271,25 +275,29 @@
     hasDisplacement = false;
     offsetsDirty = true;
     uploadParticles();
+    sampleCanvas.width = sampleCanvas.height = 1;
     canvas.dataset.particles = String(count);
     canvas.dataset.grid = `${columns}×${rows}`;
   }
 
   function resize() {
-    if (!loaded) return;
+    if (!loaded || failed || contextLost) return;
     const box = canvas.getBoundingClientRect();
     const nextWidth = Math.max(1, Math.round(box.width)), nextHeight = Math.max(1, Math.round(box.height));
-    if (nextWidth === width && nextHeight === height) return;
+    const nextDpr = Math.min(window.devicePixelRatio || 1, isMobile() ? 1.25 : 1.5, 2048 / Math.max(nextWidth, nextHeight));
+    const nextQuality = `${isMobile()}:${!!budget?.low}`;
+    if (nextWidth === width && nextHeight === height && nextDpr === dpr && nextQuality === qualityKey) return;
+    qualityKey = nextQuality;
     width = nextWidth;
     height = nextHeight;
-    dpr = Math.min(window.devicePixelRatio || 1, width < 640 ? 1.75 : 1.5);
+    dpr = nextDpr;
     canvas.width = Math.ceil(width * dpr);
     canvas.height = Math.ceil(height * dpr);
     if (gl) gl.viewport(0, 0, canvas.width, canvas.height);
-    else staticContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+
     buildParticles();
     ripples.length = 0;
-    draw(performance.now(), 0, false);
+    if (inView && !document.hidden) draw(performance.now(), 0, false);
     requestFrame();
   }
 
@@ -339,32 +347,10 @@
     offsetsDirty = true;
   }
 
-  function drawStatic() {
-    staticContext.globalAlpha = 1;
-    staticContext.fillStyle = paperColors[theme];
-    staticContext.fillRect(0, 0, width, height);
-    const ground = staticContext.createLinearGradient(0, 0, 0, height);
-    ground.addColorStop(0.13, 'rgba(12,36,42,0)');
-    ground.addColorStop(0.25, 'rgba(12,36,42,0.06)');
-    ground.addColorStop(0.39, 'rgba(12,36,42,0.72)');
-    ground.addColorStop(0.55, 'rgba(12,36,42,0.96)');
-    ground.addColorStop(1, 'rgba(12,36,42,1)');
-    staticContext.fillStyle = ground;
-    staticContext.fillRect(0, 0, width, height);
-    staticContext.textAlign = 'center';
-    staticContext.textBaseline = 'middle';
-    staticContext.font = `${glyphSize * cellWidth / 7.1}px "Noto Nastaliq Urdu", serif`;
-    for (let i = 0; i < particles.count; i++) {
-      const g = i * 6, c = i * 4;
-      staticContext.fillStyle = `rgba(${particles.colors[c]},${particles.colors[c + 1]},${particles.colors[c + 2]},${particles.colors[c + 3] / 255})`;
-      staticContext.fillText(letters[particles.geometry[g + 4]], particles.geometry[g] + width / 2, particles.geometry[g + 1] + height / 2);
-    }
-  }
-
   function draw(now, dt, animate) {
     if (!particles || contextLost) return;
     const started = performance.now();
-    if (!gl) { drawStatic(); return; }
+    if (!gl) return;
     if (animate && !userPaused()) {
       if (!pointer.down) { dragYaw *= Math.pow(0.92, dt); dragPitch *= Math.pow(0.92, dt); }
       const pointerYaw = pointer.active && !pointer.down ? (pointer.x / width - 0.5) * 0.032 : 0;
@@ -416,7 +402,8 @@
     pointer.vy *= 0.85;
     renderCost = renderCost * 0.9 + (performance.now() - started) * 0.1;
     renderedFrames++;
-    if (now - lastMetricUpdate > 1000) {
+    budget?.report('lake', performance.now() - started);
+    if (budget?.debug && now - lastMetricUpdate > 1000) {
       canvas.dataset.frameMs = renderCost.toFixed(2);
       canvas.dataset.fps = String(Math.round(renderedFrames * 1000 / (now - lastMetricUpdate)));
       lastMetricUpdate = now;
@@ -427,13 +414,14 @@
     animationFrame = 0;
     if (!canAnimate()) return;
     const interactive = pointer.active || pointer.down || ripples.length > 0;
-    const frameInterval = interactive && renderCost < 22 ? 1000 / 60 : 1000 / 30;
+    const frameInterval = isMobile() ? 1000 / (budget?.low ? 20 : 30)
+      : interactive && renderCost < 22 ? 1000 / 60 : 1000 / 30;
     if (now - lastRender >= frameInterval - 1) {
-      const milliseconds = lastFrame ? Math.min(32, now - lastFrame) : 16.67;
+      const milliseconds = lastFrame ? Math.min(100, now - lastFrame) : 16.67;
       lastFrame = now;
       lastRender = now;
       elapsed += milliseconds;
-      draw(now, milliseconds / 16.67, true);
+      draw(now, Math.min(milliseconds, 32) / 16.67, true);
     }
     animationFrame = requestAnimationFrame(frame);
   }
@@ -549,7 +537,7 @@
   window.addEventListener('portfolio:themechange', () => {
     theme = currentTheme();
     // Redraw the background even while paused or respecting reduced motion.
-    if (loaded && !contextLost) draw(performance.now(), 0, false);
+    if (loaded && !contextLost && inView && !document.hidden) draw(performance.now(), 0, false);
   });
   document.addEventListener('visibilitychange', () => { clearPointer(); syncMotion(); });
   motionPreference.addEventListener('change', () => {
@@ -558,24 +546,63 @@
     resetDisplacement();
     syncMotion();
   });
+  function queueInitialize() {
+    if (initQueued || failed) return;
+    initQueued = true;
+    const task = async () => {
+      if (!nearViewport) { initQueued = false; return; }
+      await initialize();
+    };
+    if (budget) budget.enqueue(task).catch(showFallback);
+    else requestAnimationFrame(() => setTimeout(task, 0));
+  }
   if ('IntersectionObserver' in window) {
-    new IntersectionObserver(entries => {
-      inView = entries[0].isIntersecting;
+    new IntersectionObserver(([entry]) => {
+      nearViewport = entry.isIntersecting;
+      if (nearViewport) queueInitialize();
+    }, { rootMargin: '200px', threshold: 0 }).observe(scene);
+    new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
       if (!inView) clearPointer();
       syncMotion();
-    }, { rootMargin: '80px', threshold: 0 }).observe(scene);
-  }
+    }, { threshold: 0 }).observe(scene);
+  } else { nearViewport = inView = true; queueInitialize(); }
   const scheduleResize = () => {
-    if (resizeFrame) cancelAnimationFrame(resizeFrame);
-    resizeFrame = requestAnimationFrame(() => { resizeFrame = 0; resize(); });
+    clearTimeout(resizeFrame);
+    resizeFrame = setTimeout(() => { resizeFrame = 0; resize(); }, 180);
   };
   if ('ResizeObserver' in window) new ResizeObserver(scheduleResize).observe(canvas);
   else window.addEventListener('resize', scheduleResize, { passive: true });
+  budget?.subscribe(() => { clearPointer(); resize(); syncMotion(); });
+
+  function showFallback(error) {
+    failed = true;
+    loaded = false;
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+    animationFrame = 0;
+    scene.classList.remove('is-ready');
+    canvas.dataset.state = 'fallback';
+    canvas.hidden = true;
+    canvas.tabIndex = -1;
+    canvas.setAttribute('aria-hidden', 'true');
+    if (pauseButton) pauseButton.hidden = true;
+    particles = null;
+    if (gl && gpu && !contextLost) {
+      for (const key of ['quad', 'geometry', 'colors', 'offsets']) gl.deleteBuffer(gpu[key]);
+      gl.deleteTexture(gpu.texture);
+      gl.deleteProgram(gpu.backgroundProgram); gl.deleteProgram(gpu.particleProgram);
+    }
+    gpu = null;
+    canvas.width = canvas.height = 1;
+    atlas.width = atlas.height = sampleCanvas.width = sampleCanvas.height = 1;
+    if (budget?.debug && error) console.warn('Lake fallback:', error);
+  }
 
   canvas.addEventListener('webglcontextlost', event => {
     event.preventDefault();
     contextLost = true;
     clearPointer();
+    if (restoredOnce || isMobile()) { showFallback(); return; }
     if (animationFrame) cancelAnimationFrame(animationFrame);
     animationFrame = 0;
     scene.classList.remove('is-ready');
@@ -585,6 +612,8 @@
     if (pauseButton) pauseButton.hidden = true;
   });
   canvas.addEventListener('webglcontextrestored', () => {
+    if (failed || restoredOnce) return;
+    restoredOnce = true;
     try {
       contextLost = false;
       if (!loaded || !particles) {
@@ -592,11 +621,13 @@
         if (assetsReady) initialize();
         return;
       }
+      makeAtlas();
       setupGPU();
+      atlas.width = atlas.height = 1;
       gl.viewport(0, 0, canvas.width, canvas.height);
       resetDisplacement();
       uploadParticles();
-      draw(performance.now(), 0, false);
+      if (inView && !document.hidden) draw(performance.now(), 0, false);
       canvas.hidden = false;
       canvas.tabIndex = 0;
       canvas.removeAttribute('aria-hidden');
@@ -605,21 +636,29 @@
       requestFrame();
     } catch (error) {
       contextLost = true;
-      console.warn('The lake photograph remains available after a graphics interruption.', error);
+      showFallback(error);
     }
   });
 
   async function initialize() {
     try {
+      gl = canvas.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: isMobile() ? 'low-power' : 'default' });
+      if (!gl) throw new Error('WebGL unavailable');
+      atlasContext = atlas.getContext('2d');
+      sampleContext = sampleCanvas.getContext('2d', { willReadFrequently: true });
+      canvas.dataset.renderer = 'webgl';
+      canvas.dataset.state = 'loading';
       photo.src = canvas.dataset.image;
       const loadImage = photo.decode ? photo.decode() : new Promise((resolve, reject) => { photo.onload = resolve; photo.onerror = reject; });
       const loadFont = document.fonts?.load('18px "Noto Nastaliq Urdu"', 'بہک') ?? Promise.resolve();
       await Promise.all([loadImage, loadFont]);
-      if (!atlasContext || !sampleContext) return;
+      if (!atlasContext || !sampleContext) throw new Error('Canvas allocation unavailable');
+      if (failed) return;
       makeAtlas();
       assetsReady = true;
       if (gl && contextLost) return;
       if (gl) setupGPU();
+      atlas.width = atlas.height = 1;
       loaded = true;
       resetDisplacement();
       resize();
@@ -633,15 +672,6 @@
       }
       updateControls();
       requestFrame();
-    } catch (error) {
-      canvas.dataset.state = 'fallback';
-      canvas.hidden = true;
-      canvas.tabIndex = -1;
-      canvas.setAttribute('aria-hidden', 'true');
-      if (pauseButton) pauseButton.hidden = true;
-      // The sibling photograph remains visible when decoding or canvas is unavailable.
-      console.warn('The letter curtain could not load; showing the lake photograph.', error);
-    }
+    } catch (error) { showFallback(error); }
   }
-  initialize();
 })();

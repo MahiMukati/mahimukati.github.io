@@ -1,185 +1,232 @@
-/* Original photo pixels for the person; Urdu glyphs for the city behind them.
-   The earlier edge-only treatment is retained for saved browser preferences. */
+/* Original photo pixels for the person; cached Urdu glyphs for the city.
+   Only the small fringe moves. Construction buffers are released immediately. */
 (() => {
-  const alphabet = Array.from('ابتٹثجچحخدڈرڑزژسشصضطظعغفقکگلمنںوہھیے');
+  'use strict';
+  const runtime = window.PortfolioMotion;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const W = 360, H = 440, insetX = 40, insetY = 40, photoW = 280, photoH = 360;
+  const coarse = matchMedia('(pointer: coarse)');
+  const mobile = () => runtime ? runtime.mobile : coarse.matches || innerWidth < 768;
+  const still = () => runtime ? runtime.reduced : reduced.matches;
+  const alphabet = Array.from('ابتٹثجچحخدڈرڑزژسشصضطظعغفقکگلمنںوہھیے');
+  const W = 360, H = 440, insetX = 40, insetY = 40, photoW = 280, photoH = 360, tile = 28;
   const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
   const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
   const random = (n, seed) => { const v = Math.sin(n * 127.1 + seed * 311.7) * 43758.5453; return v - Math.floor(v); };
-  const edge = (x, y) => {
-    const distance = Math.min(x - insetX, insetX + photoW - x, y - insetY, insetY + photoH - y);
-    return distance + Math.sin(x * .073 + y * .039) * 5 + Math.sin(y * .13 - x * .047) * 3;
+  const edge = (x, y) => Math.min(x - insetX, insetX + photoW - x, y - insetY, insetY + photoH - y)
+    + Math.sin(x * .073 + y * .039) * 5 + Math.sin(y * .13 - x * .047) * 3;
+  const free = surface => { if (surface) surface.width = surface.height = 0; };
+  const decode = async image => {
+    let timeout;
+    try {
+      await Promise.race([image.decode(), new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('Portrait image timed out')), 8000);
+      })]);
+    } finally { clearTimeout(timeout); }
   };
 
-  document.querySelectorAll('[data-letter-portrait]').forEach(async figure => {
-    const img = figure.querySelector('img');
-    const canvas = figure.querySelector('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    try {
-      await Promise.all([img.decode(), document.fonts.load('13px "Noto Nastaliq Urdu"')]);
-      // A srcset image reports density-corrected dimensions. Decode its chosen
-      // source separately so the canvas crop uses the actual source pixels.
-      const source = new Image();
-      source.src = img.currentSrc || img.src;
-      await source.decode();
-      const scale = Math.min(devicePixelRatio || 1, 2);
-      canvas.width = W * scale;
-      canvas.height = H * scale;
-      ctx.scale(scale, scale);
-
-      const photo = document.createElement('canvas');
-      photo.width = W * scale;
-      photo.height = H * scale;
-      const pc = photo.getContext('2d', {willReadFrequently:true});
-      pc.scale(scale, scale);
-      // Match object-fit: cover; never stretch the face.
-      const ratio = Math.max(photoW / source.naturalWidth, photoH / source.naturalHeight);
-      const sw = photoW / ratio, sh = photoH / ratio;
-      pc.drawImage(source, (source.naturalWidth-sw)/2, (source.naturalHeight-sh)/2, sw, sh, insetX, insetY, photoW, photoH);
-      const pixels = pc.getImageData(0, 0, photo.width, photo.height);
-      const subject = document.createElement('canvas');
-      subject.width=canvas.width;subject.height=canvas.height;
-      const sc=subject.getContext('2d');
-      sc.drawImage(photo,0,0);
-      const mask=document.createElement('canvas');
-      mask.width=canvas.width;mask.height=canvas.height;
-      const mc=mask.getContext('2d',{willReadFrequently:true});
-      let separated=false;
-      try {
-        const cutout=new Image();
-        cutout.src=figure.dataset.cutout;
-        await cutout.decode();
-        // Only the generated alpha is used. Face, hair and clothing colors are
-        // always the exact pixels of the original photograph, not a generated face.
-        mc.drawImage(cutout,
-          (source.naturalWidth-sw)/2/source.naturalWidth*cutout.naturalWidth,
-          (source.naturalHeight-sh)/2/source.naturalHeight*cutout.naturalHeight,
-          sw/source.naturalWidth*cutout.naturalWidth,
-          sh/source.naturalHeight*cutout.naturalHeight,
-          insetX*scale,insetY*scale,photoW*scale,photoH*scale);
-        sc.globalCompositeOperation='destination-in';
-        sc.drawImage(mask,0,0);
-        sc.globalCompositeOperation='source-over';
-        // Let the cropped torso meet the existing soft outer fringe.
-        const subjectPixels=sc.getImageData(0,0,subject.width,subject.height);
-        for(let y=0;y<subject.height;y++) for(let x=0;x<subject.width;x++) {
-          subjectPixels.data[(y*subject.width+x)*4+3] *= smooth(0,18,edge(x/scale,y/scale));
-        }
-        sc.putImageData(subjectPixels,0,0);
-        separated=true;
-      } catch(error) {
-        console.warn('portrait cutout unavailable; retaining earlier version',error);
-      }
-      const colorAt = (x, y) => {
-        const sx = Math.floor(clamp(x, insetX+1, insetX+photoW-2) * scale);
-        const sy = Math.floor(clamp(y, insetY+1, insetY+photoH-2) * scale);
-        const i = (sy * photo.width + sx) * 4;
-        return `rgb(${pixels.data[i]},${pixels.data[i+1]},${pixels.data[i+2]})`;
-      };
-      const glyphLayer = document.createElement('canvas');
-      glyphLayer.width = canvas.width;
-      glyphLayer.height = canvas.height;
-      const gc = glyphLayer.getContext('2d');
-      gc.scale(scale,scale);
-      gc.font = '13px "Noto Nastaliq Urdu"';
-      gc.textAlign = 'center';
-      gc.textBaseline = 'middle';
-      const background=document.createElement('canvas');
-      background.width=canvas.width;background.height=canvas.height;
-      const bc=background.getContext('2d');
-      bc.scale(scale,scale);
-      bc.font=gc.font;bc.textAlign=gc.textAlign;bc.textBaseline=gc.textBaseline;
-      // Dense, still letters carry the structure of the photo into the loose fringe.
-      let index = 0;
-      for (let y=22; y<H-22; y+=6) for (let x=22; x<W-22; x+=5) {
-        index++;
-        const px=x+(random(index,1)-.5)*3, py=y+(random(index,2)-.5)*3;
-        const d=edge(px,py);
-        // In the new version, every background pixel is replaced by a letter.
-        const backgroundOpacity=smooth(-17,12,d);
-        if(backgroundOpacity>.025 && random(index,3)<smooth(-19,8,d)) {
-          bc.globalAlpha=backgroundOpacity*(.76+random(index,4)*.24);
-          bc.fillStyle=colorAt(px,py);
-          bc.fillText(alphabet[index%alphabet.length],px,py);
-        }
-        const opacity = smooth(-17,10,d) * (1-smooth(17,50,d));
-        if (opacity<.025 || random(index,3)>smooth(-19,8,d)) continue;
-        gc.globalAlpha=opacity*(.65+random(index,4)*.35);
-        gc.fillStyle=colorAt(px,py);
-        gc.fillText(alphabet[index%alphabet.length],px,py);
-      }
-      // Mask alpha only; the original photo and its colors remain untouched.
-      for(let y=0;y<photo.height;y++) for(let x=0;x<photo.width;x++) {
-        const i=(y*photo.width+x)*4+3;
-        pixels.data[i] *= smooth(9,49,edge(x/scale,y/scale));
-      }
-      pc.putImageData(pixels,0,0);
-
-      const particles=[];
-      const atlas=document.createElement('canvas');
-      const tile=28, count=150;
-      atlas.width=tile*count*scale;
-      atlas.height=tile*scale;
-      const ac=atlas.getContext('2d');
-      ac.scale(scale,scale);
-      ac.font='13px "Noto Nastaliq Urdu"';
-      ac.textAlign='center'; ac.textBaseline='middle';
-      for(let i=0;i<count;i++) {
-        const side=i%4, along=random(i,5);
-        let x,y;
-        if(side<2){ x=side===0?insetX+8:insetX+photoW-8; y=insetY+along*photoH; }
-        else { x=insetX+along*photoW; y=side===2?insetY+9:insetY+photoH-9; }
-        ac.fillStyle=colorAt(x,y);
-        ac.fillText(alphabet[i%alphabet.length],i*tile+tile/2,tile/2);
-        particles.push({x,y,dx:side===0?-1:side===1?1:(along-.5)*1.4,dy:side===3?.3:-1,
-          phase:random(i,6),duration:9+random(i,7)*9,reach:14+random(i,8)*20});
-      }
-      let visible=true, frame=0, last=0, time=0;
-      let letterBackground=separated;
-      try {if(localStorage.getItem('mahi-portrait-version')==='earlier') letterBackground=false;} catch {}
-      const draw = () => {
-        ctx.clearRect(0,0,W,H);
-        ctx.globalAlpha=1;
-        if(letterBackground){
-          ctx.drawImage(background,0,0,W,H);
-        } else {
-          ctx.drawImage(photo,0,0,W,H);
-          ctx.drawImage(glyphLayer,0,0,W,H);
-        }
-        for(let i=0;i<particles.length;i++) {
-          const p=particles[i];
-          const t=(p.phase+time/p.duration)%1;
-          ctx.globalAlpha=Math.sin(Math.PI*t)*.62;
-          const x=p.x+p.dx*p.reach*t+Math.sin(t*5+p.phase*6)*2;
-          const y=p.y+p.dy*p.reach*t-9*t;
-          ctx.drawImage(atlas,i*tile*scale,0,tile*scale,tile*scale,x-tile/2,y-tile/2,tile,tile);
-        }
-        ctx.globalAlpha=1;
-        // The person is the top layer, so drifting letters never cross the face.
-        if(letterBackground) ctx.drawImage(subject,0,0,W,H);
-      };
-      figure.dataset.portraitVersion=letterBackground?'letter-background':'earlier';
-      const tick = now => {
-        frame=0;
-        if(!visible || document.hidden || reduced.matches) return;
-        if(now-last>=32){time+=Math.min((now-last)/1000,.05);last=now;draw();}
-        frame=requestAnimationFrame(tick);
-      };
-      const resume = () => {
-        cancelAnimationFrame(frame);frame=0;last=performance.now();
-        draw();
-        if(visible && !document.hidden && !reduced.matches) frame=requestAnimationFrame(tick);
-      };
-      draw();
-      figure.classList.add('is-ready');
-      new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;resume();}).observe(figure);
-      document.addEventListener('visibilitychange',resume);
-      reduced.addEventListener('change',resume);
-    } catch(error) {
-      // The accessible photo remains visible if decoding or canvas setup is unavailable.
-      console.warn('portrait letter effect unavailable',error);
+  document.querySelectorAll('[data-letter-portrait]').forEach(figure => {
+    const img = figure.querySelector('img'), canvas = figure.querySelector('canvas');
+    const ctx = canvas?.getContext('2d');
+    if (!img || !canvas || !ctx) return;
+    let resources = null, frame = 0, resizeTimer = 0, last = 0, lastDraw = 0, time = 0;
+    let building = false, buildAgain = false, failed = false, disposed = false, dirty = true;
+    const box = figure.getBoundingClientRect();
+    let visible = box.bottom > 0 && box.top < innerHeight;
+    const active = () => visible && !document.hidden && !disposed;
+    const particleLimit = () => mobile() ? (runtime?.low ? 20 : 40) : 150;
+    function dimensions() {
+      const width = Math.max(1, figure.getBoundingClientRect().width);
+      const dpr = Math.min(devicePixelRatio || 1, mobile() ? 1.25 : 2);
+      const scale = Math.min(2048 / H, width / W * dpr);
+      return { width: Math.ceil(W * scale), height: Math.ceil(H * scale), scale };
     }
+    function disposeResources(value) {
+      if (!value) return;
+      free(value.base); free(value.subject); free(value.atlas);
+    }
+    function stop() {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0; last = lastDraw = 0;
+    }
+    function draw() {
+      if (!resources || !active()) { dirty = true; return; }
+      const started = performance.now();
+      ctx.clearRect(0, 0, W, H); ctx.globalAlpha = 1;
+      ctx.drawImage(resources.base, 0, 0, W, H);
+      const count = Math.min(particleLimit(), resources.particles.length);
+      for (let i = 0; i < count; i++) {
+        const p = resources.particles[i], t = (p.phase + time / p.duration) % 1;
+        ctx.globalAlpha = Math.sin(Math.PI * t) * .62;
+        const x = p.x + p.dx * p.reach * t + Math.sin(t * 5 + p.phase * 6) * 2;
+        const y = p.y + p.dy * p.reach * t - 9 * t;
+        ctx.drawImage(resources.atlas, p.sx, p.sy, resources.cell, resources.cell,
+          x - tile / 2, y - tile / 2, tile, tile);
+      }
+      ctx.globalAlpha = 1;
+      // Keep drifting letters behind the original face and clothing.
+      if (resources.subject) ctx.drawImage(resources.subject, 0, 0, W, H);
+      dirty = false;
+      runtime?.report('portrait', performance.now() - started);
+    }
+    function tick(now) {
+      frame = 0;
+      if (!active() || still() || !resources) return;
+      const interval = 1000 / (mobile() && runtime?.low ? 20 : 30);
+      if (last) time += Math.min((now - last) / 1000, .05);
+      last = now;
+      if (dirty || !lastDraw || now - lastDraw >= interval - 1) { draw(); lastDraw = now; }
+      if (!frame && active() && !still()) frame = requestAnimationFrame(tick);
+    }
+    function resume() {
+      stop();
+      if (!active() || !resources) return;
+      if (dirty) draw();
+      if (!frame && !still()) frame = requestAnimationFrame(tick);
+    }
+    async function build(size) {
+      const scratch = new Set();
+      const surface = (width = size.width, height = size.height) => {
+        const value = document.createElement('canvas');
+        value.width = width; value.height = height; scratch.add(value); return value;
+      };
+      try {
+        await decode(img);
+        if (document.fonts) await document.fonts.load('13px "Noto Nastaliq Urdu"');
+        // Draw the whole selected image and clip its destination. srcset can
+        // density-correct naturalWidth while drawImage source rectangles still
+        // address raw pixels in WebKit, so never crop with source coordinates.
+        const ratio = Math.max(photoW / img.naturalWidth, photoH / img.naturalHeight);
+        const coverW = img.naturalWidth * ratio, coverH = img.naturalHeight * ratio;
+        const coverX = insetX + (photoW - coverW) / 2, coverY = insetY + (photoH - coverH) / 2;
+        const photo = surface(), pc = photo.getContext('2d', { willReadFrequently: true });
+        if (!pc) throw new Error('Portrait sampling unavailable');
+        pc.setTransform(size.scale, 0, 0, size.scale, 0, 0);
+        pc.save(); pc.beginPath(); pc.rect(insetX, insetY, photoW, photoH); pc.clip();
+        pc.drawImage(img, coverX, coverY, coverW, coverH); pc.restore();
+        const pixels = pc.getImageData(0, 0, size.width, size.height);
+        const colorAt = (x, y) => {
+          const sx = Math.floor(clamp(x, insetX + 1, insetX + photoW - 2) * size.scale);
+          const sy = Math.floor(clamp(y, insetY + 1, insetY + photoH - 2) * size.scale);
+          const i = (sy * size.width + sx) * 4;
+          return `rgb(${pixels.data[i]},${pixels.data[i + 1]},${pixels.data[i + 2]})`;
+        };
+        let letterBackground = true, subject = null;
+        try { letterBackground = localStorage.getItem('mahi-portrait-version') !== 'earlier'; } catch {}
+        if (letterBackground) {
+          try {
+            const cutout = new Image(); cutout.src = figure.dataset.cutout;
+            await decode(cutout);
+            subject = surface();
+            const sc = subject.getContext('2d', { willReadFrequently: true });
+            if (!sc) throw new Error('Portrait mask unavailable');
+            sc.drawImage(photo, 0, 0);
+            sc.globalCompositeOperation = 'destination-in';
+            sc.drawImage(cutout, coverX * size.scale, coverY * size.scale,
+              coverW * size.scale, coverH * size.scale);
+            sc.globalCompositeOperation = 'source-over';
+            const subjectPixels = sc.getImageData(0, 0, size.width, size.height);
+            for (let y = 0; y < size.height; y++) for (let x = 0; x < size.width; x++) {
+              subjectPixels.data[(y * size.width + x) * 4 + 3] *= smooth(0, 18, edge(x / size.scale, y / size.scale));
+            }
+            sc.putImageData(subjectPixels, 0, 0);
+          } catch {
+            letterBackground = false; free(subject); scratch.delete(subject); subject = null;
+          }
+        }
+        const base = letterBackground ? surface() : photo;
+        const bc = base.getContext('2d');
+        if (!bc) throw new Error('Portrait composition unavailable');
+        if (!letterBackground) {
+          for (let y = 0; y < size.height; y++) for (let x = 0; x < size.width; x++) {
+            pixels.data[(y * size.width + x) * 4 + 3] *= smooth(9, 49, edge(x / size.scale, y / size.scale));
+          }
+          pc.putImageData(pixels, 0, 0);
+        }
+        bc.setTransform(size.scale, 0, 0, size.scale, 0, 0);
+        bc.font = '13px "Noto Nastaliq Urdu"'; bc.textAlign = 'center'; bc.textBaseline = 'middle';
+        let index = 0;
+        for (let y = 22; y < H - 22; y += 6) for (let x = 22; x < W - 22; x += 5) {
+          index++;
+          const px = x + (random(index, 1) - .5) * 3, py = y + (random(index, 2) - .5) * 3, d = edge(px, py);
+          const opacity = letterBackground ? smooth(-17, 12, d) : smooth(-17, 10, d) * (1 - smooth(17, 50, d));
+          if (opacity < .025 || random(index, 3) > smooth(-19, 8, d)) continue;
+          bc.globalAlpha = opacity * (letterBackground ? .76 + random(index, 4) * .24 : .65 + random(index, 4) * .35);
+          bc.fillStyle = colorAt(px, py); bc.fillText(alphabet[index % alphabet.length], px, py);
+        }
+        bc.globalAlpha = 1;
+        const count = particleLimit(), columns = Math.min(15, count), cell = Math.ceil(tile * size.scale);
+        const atlas = surface(columns * cell, Math.ceil(count / columns) * cell);
+        const ac = atlas.getContext('2d');
+        if (!ac) throw new Error('Portrait sprites unavailable');
+        ac.font = `${13 * size.scale}px "Noto Nastaliq Urdu"`; ac.textAlign = 'center'; ac.textBaseline = 'middle';
+        const particles = [];
+        for (let i = 0; i < count; i++) {
+          const side = i % 4, along = random(i, 5);
+          const x = side < 2 ? (side === 0 ? insetX + 8 : insetX + photoW - 8) : insetX + along * photoW;
+          const y = side < 2 ? insetY + along * photoH : side === 2 ? insetY + 9 : insetY + photoH - 9;
+          const sx = i % columns * cell, sy = Math.floor(i / columns) * cell;
+          ac.fillStyle = colorAt(x, y); ac.fillText(alphabet[i % alphabet.length], sx + cell / 2, sy + cell / 2);
+          particles.push({ x, y, sx, sy, dx: side === 0 ? -1 : side === 1 ? 1 : (along - .5) * 1.4,
+            dy: side === 3 ? .3 : -1, phase: random(i, 6), duration: 9 + random(i, 7) * 9, reach: 14 + random(i, 8) * 20 });
+        }
+        for (const retained of [base, subject, atlas]) scratch.delete(retained);
+        return { ...size, base, subject, atlas, particles, cell, letterBackground };
+      } finally { for (const temporary of scratch) free(temporary); }
+    }
+    function requestBuild() {
+      if (disposed || failed || !active()) return;
+      const size = dimensions();
+      if (resources && resources.width === size.width && resources.height === size.height && resources.particles.length >= particleLimit()) { resume(); return; }
+      if (building) { buildAgain = true; return; }
+      building = true;
+      const job = async () => {
+        try {
+          if (!active()) return;
+          const next = await build(size);
+          if (disposed) { disposeResources(next); return; }
+          stop(); disposeResources(resources); resources = next;
+          canvas.width = size.width; canvas.height = size.height;
+          ctx.setTransform(size.scale, 0, 0, size.scale, 0, 0);
+          figure.dataset.portraitVersion = next.letterBackground ? 'letter-background' : 'earlier';
+          if (runtime?.debug) {
+            figure.dataset.particles = String(next.particles.length);
+            figure.dataset.atlas = `${next.atlas.width}×${next.atlas.height}`;
+          }
+          dirty = true; resume(); figure.classList.add('is-ready');
+        } catch (error) {
+          failed = true; stop(); disposeResources(resources); resources = null;
+          free(canvas); figure.classList.remove('is-ready');
+          console.warn('portrait letter effect unavailable; keeping the photo', error);
+        } finally {
+          building = false;
+          if (buildAgain) { buildAgain = false; requestBuild(); }
+        }
+      };
+      if (runtime) runtime.enqueue(job);
+      else requestAnimationFrame(() => setTimeout(job, 0));
+    }
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([entry]) => {
+        visible = entry.isIntersecting;
+        if (visible) { requestBuild(); resume(); } else stop();
+      }).observe(figure);
+    }
+    const resize = () => {
+      clearTimeout(resizeTimer); resizeTimer = setTimeout(requestBuild, 150);
+    };
+    if ('ResizeObserver' in window) new ResizeObserver(resize).observe(figure);
+    else window.addEventListener('resize', resize, { passive: true });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) { requestBuild(); resume(); } else stop();
+    });
+    const profileChanged = () => { dirty = true; requestBuild(); resume(); };
+    if (runtime) runtime.subscribe(profileChanged);
+    else reduced.addEventListener('change', profileChanged);
+    window.addEventListener('pagehide', event => {
+      stop(); clearTimeout(resizeTimer);
+      if (!event.persisted) { disposed = true; disposeResources(resources); resources = null; free(canvas); }
+    });
+    window.addEventListener('pageshow', () => { dirty = true; requestBuild(); resume(); });
+    requestBuild();
   });
 })();

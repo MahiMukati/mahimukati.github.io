@@ -1,7 +1,6 @@
 /* The homepage builds quietly from a personal introduction to the lake. */
-@font-face{font-family:'EB Garamond';src:url('fonts/eb-garamond.ttf') format('truetype');font-style:normal;font-weight:400 800;font-display:swap}
 .lake-home>.home-journey{display:block;flex:none;position:relative;isolation:isolate}
-#scroll-letters{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+#scroll-letters{position:fixed;left:0;top:0;width:100%;height:100vh;z-index:1;pointer-events:none;contain:strict}
 .home-story{position:relative;z-index:2;width:min(100%,1120px);margin-inline:auto;padding-inline:clamp(24px,8vw,100px)}
 .home-greeting,.home-current{display:flex;align-items:center;position:relative}
 .home-greeting{min-height:70svh;padding-block:60px 80px;gap:clamp(20px,4vw,60px);justify-content:space-between}
@@ -11,7 +10,7 @@
 .home-portrait canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none}
 .home-portrait.is-ready canvas{opacity:1}
 .home-portrait.is-ready img{opacity:0}
-.home-greeting h1{max-width:30ch;margin:0;font:400 clamp(30px,3.2vw,42px)/1.35 'EB Garamond',Georgia,serif;letter-spacing:-.55px;text-wrap:pretty}
+.home-greeting h1{max-width:30ch;margin:0;font:400 clamp(30px,3.2vw,42px)/1.35 Newsreader,Georgia,serif;letter-spacing:-.55px;text-wrap:pretty}
 .home-current{min-height:46svh;padding-block:54px 64px;justify-content:flex-end}
 .home-current:nth-of-type(odd){justify-content:flex-start}
 .home-current p{max-width:38ch;margin:0;font-size:clamp(19px,2vw,24px);line-height:1.75;letter-spacing:-.3px;text-wrap:pretty}
