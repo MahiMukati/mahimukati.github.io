@@ -20,5 +20,5 @@
 .photo-stack-dot{display:flex;align-items:center;justify-content:center;width:30px;height:44px;padding:0;border:0;background:transparent;cursor:pointer}
 .photo-stack-dot::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--lake-muted);opacity:.4;transition:transform 250ms ease,opacity 250ms ease}
 .photo-stack-dot[aria-current=true]::before{opacity:1;background:var(--lake-ink);transform:scale(1.4)}
-.photo-stack-caption{margin:8px 6% 0;color:var(--lake-muted);font-size:13px;min-height:21px}
+.photo-stack-caption{margin:8px 6% 0;color:var(--lake-muted);font-size:15px;min-height:21px}
 @media(prefers-reduced-motion:reduce){.photo-stack-image,.photo-stack-arrow,.photo-stack-dot::before{transition:none}}
